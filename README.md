@@ -2,6 +2,8 @@
 
 **Sylheti** is a custom programming language featuring a unique **Sylheti domain vocabulary**, a Flex lexical scanner, a Bison LALR parser, an Abstract Syntax Tree (AST) generator, and a C execution interpreter.
 
+**GitHub Repository**: [https://github.com/theniyazkhan/syleti_lang](https://github.com/theniyazkhan/syleti_lang)
+
 ---
 
 ## 🏛️ Architecture Overview
