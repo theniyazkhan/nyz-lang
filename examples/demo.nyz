@@ -1,33 +1,22 @@
-manifest "=== Nyz-Lang Feature Demonstration ===";
+dekha "=== Sylheti Nyz-Lang Demonstration ===";
 
-manifest "Enter a starting base number:";
-morphe base;
-absorb base;
+dhoro a = 5;
+dhoro b = 3;
+dhoro pow = a ^ b;
 
-manifest "Enter an exponent:";
-morphe exp;
-absorb exp;
+dekha "Calculated 5 ^ 3:";
+dekha pow;
 
-morphe result = base ^ exp;
-manifest "Calculated Power (base ^ exp):";
-manifest result;
-
-perchance (result > 100) {
-  manifest "Result is greater than 100!";
-} otherwise {
-  perchance (result == 100) {
-    manifest "Result is exactly equal to 100!";
-  } otherwise {
-    manifest "Result is less than 100!";
-  }
+jodi (pow > 100 ar hasa) {
+  dekha "Result is greater than 100!";
+} naile {
+  dekha "Result is smaller!";
 }
 
-manifest "--- Countdown Loop ---";
-morphe counter = 5;
-persist (counter > 0) {
-  manifest "Count:";
-  manifest counter;
-  counter = counter - 1;
+dekha "--- Ghur (For Loop) Countdown ---";
+ghur (dhoro i = 5; i > 0; i = i - 1) {
+  dekha "Count:";
+  dekha i;
 }
 
-manifest "=== Demo Execution Complete ===";
+dekha "=== Sylheti Demo Finished ===";

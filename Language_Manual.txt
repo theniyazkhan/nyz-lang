@@ -3,8 +3,8 @@
 ========================================================================
 
 Nyz-Lang is a domain-specific programming language compiled and interpreted
-using Flex and Bison. This manual provides complete syntax rules, keyword
-mappings, EBNF grammar specifications, and usage examples.
+using Flex and Bison. Nyz-Lang features a unique Sylheti-inspired vocabulary
+with support for right-associative exponentiation, logical operators, and loops.
 
 
 1. PREREQUISITES & COMPILATION INSTRUCTIONS
@@ -35,19 +35,28 @@ Clean Build Artifacts:
     make clean
 
 
-2. KEYWORD CHEAT SHEET
-======================
+2. SYLHETI KEYWORD CHEAT SHEET
+==============================
 
 +-------------------+--------------------+-----------------------------------------------+
 | Standard Concept  | Nyz-Lang Keyword   | Example Syntax                                |
 +-------------------+--------------------+-----------------------------------------------+
-| Variable Decl     | morphe             | morphe x = 10;                                |
-| Print Output      | manifest           | manifest x;  OR  manifest "Hello\n";          |
-| User Input        | absorb             | absorb x;                                     |
-| Conditional (If)  | perchance          | perchance (x > 0) { manifest x; }             |
-| Otherwise (Else)  | otherwise          | perchance (x > 0) { ... } otherwise { ... }   |
-| Loop (While)      | persist            | persist (count > 0) { count = count - 1; }    |
+| Variable Decl     | dhoro              | dhoro x = 10;                                 |
+| Print Output      | dekha              | dekha x;  OR  dekha "Hello\n";                |
+| User Input        | ne                 | ne x;                                         |
+| Conditional (If)  | jodi               | jodi (x > 0) { dekha x; }                     |
+| Otherwise (Else)  | naile              | jodi (x > 0) { ... } naile { ... }            |
+| While Loop        | ghuro              | ghuro (count > 0) { count = count - 1; }      |
+| For Loop          | ghur               | ghur (dhoro i = 0; i < 5; i = i + 1) { ... }  |
+| Boolean True      | hasa               | dhoro is_active = hasa;                        |
+| Boolean False     | misa               | dhoro is_active = misa;                        |
+| Logical AND       | ar                 | jodi (x > 0 ar y > 0) { ... }                 |
+| Logical OR        | ernay              | jodi (x > 0 ernay y > 0) { ... }              |
+| Logical NOT       | nabe               | jodi (nabe (x == 0)) { ... }                  |
 +-------------------+--------------------+-----------------------------------------------+
+
+*Note: Legacy/simplified keywords (`morphe`, `let`, `manifest`, `show`, `absorb`, `input`,
+`perchance`, `if`, `otherwise`, `else`, `persist`, `while`) are also supported.*
 
 
 3. FORMAL EBNF SYNTAX RULES
@@ -60,24 +69,29 @@ Statement        ::= Declaration
                    | Assignment
                    | PrintStatement
                    | InputStatement
-                   | PerchanceStatement
-                   | PersistStatement
+                   | JodiStatement
+                   | GhuroStatement
+                   | GhurStatement
                    | Block ;
 
-Declaration      ::= "morphe" IDENTIFIER [ "=" Expression ] ";" ;
+Declaration      ::= "dhoro" IDENTIFIER [ "=" Expression ] ";" ;
 Assignment       ::= IDENTIFIER "=" Expression ";" ;
 
-PrintStatement   ::= "manifest" Expression ";"
-                   | "manifest" STRING_LITERAL ";" ;
+PrintStatement   ::= "dekha" Expression ";"
+                   | "dekha" STRING_LITERAL ";" ;
 
-InputStatement   ::= "absorb" IDENTIFIER ";" ;
+InputStatement   ::= "ne" IDENTIFIER ";" ;
 
-PerchanceStatement ::= "perchance" "(" Expression ")" Statement [ "otherwise" Statement ] ;
-PersistStatement   ::= "persist" "(" Expression ")" Statement ;
+JodiStatement    ::= "jodi" "(" Expression ")" Statement [ "naile" Statement ] ;
+GhuroStatement   ::= "ghuro" "(" Expression ")" Statement ;
+GhurStatement    ::= "ghur" "(" [ Declaration | Assignment | ";" ] Expression ";" [ Assignment ] ")" Statement ;
 
 Block            ::= "{" StatementList "}" ;
 
-Expression       ::= Expression "+" Term
+Expression       ::= Expression "ernay" Expression
+                   | Expression "ar" Expression
+                   | Expression RelationalOp Expression
+                   | Expression "+" Term
                    | Expression "-" Term
                    | Term ;
 
@@ -89,7 +103,10 @@ Factor           ::= Primary "^" Factor    (* Exponentiation: Right-Associative 
                    | Primary ;
 
 Primary          ::= INTEGER
+                   | "hasa"
+                   | "misa"
                    | IDENTIFIER
+                   | "nabe" Primary
                    | "-" Primary
                    | "(" Expression ")" ;
 
@@ -101,36 +118,31 @@ RelationalOp     ::= "<" | "<=" | ">" | ">=" | "==" | "!=" ;
 
 Example 1: Variable Declaration and Arithmetic
 -----------------------------------------------
-morphe a = 5;
-morphe b = 3;
-morphe result = a ^ b;    // Calculates 5^3 = 125
-manifest "Result of 5^3:";
-manifest result;
+dhoro a = 5;
+dhoro b = 3;
+dhoro result = a ^ b;    // Calculates 5^3 = 125
+dekha "Result of 5^3:";
+dekha result;
 
 
 Example 2: Interactive Input and Conditional Logic
 --------------------------------------------------
-manifest "Please enter your age:";
-morphe age;
-absorb age;
+dekha "Please enter your age:";
+dhoro age;
+ne age;
 
-perchance (age >= 18) {
-  manifest "Access Granted: Adult";
-} otherwise {
-  manifest "Access Restricted: Minor";
+jodi (age >= 18 ar hasa) {
+  dekha "Access Granted: Adult";
+} naile {
+  dekha "Access Restricted: Minor";
 }
 
 
-Example 3: Counter Loop with Exponentiation
-------------------------------------------
-morphe n = 1;
-persist (n <= 5) {
-  morphe p = 2 ^ n;
-  manifest "2 ^";
-  manifest n;
-  manifest "=";
-  manifest p;
-  n = n + 1;
+Example 3: Ghur (For Loop) Countdown
+------------------------------------
+ghur (dhoro i = 5; i > 0; i = i - 1) {
+  dekha "Countdown:";
+  dekha i;
 }
 
 ========================================================================

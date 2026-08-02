@@ -1,6 +1,6 @@
 # Nyz-Lang (.nyz)
 
-**Nyz-Lang** is a custom programming language designed with an intuitive domain vocabulary, a Flex lexical scanner, a Bison LALR parser, an Abstract Syntax Tree (AST) generator, and a C execution interpreter.
+**Nyz-Lang** is a custom programming language featuring a unique **Sylheti-inspired domain vocabulary**, a Flex lexical scanner, a Bison LALR parser, an Abstract Syntax Tree (AST) generator, and a C execution interpreter.
 
 ---
 
@@ -34,13 +34,17 @@ The Nyz-Lang compiler pipeline consists of three core stages:
 
 ### 1. Lexical Analysis (`lexer.l`)
 - Built using **Flex**.
-- Converts `.nyz` raw source code into structured tokens: keywords (`morphe`, `manifest`, `absorb`, `perchance`, `otherwise`, `persist`), identifiers, integer constants, double-quoted string literals, and operators (`^`, `+`, `-`, `*`, `/`, `==`, `!=`, `<=`, `>=`).
+- Converts `.nyz` raw source code into structured tokens:
+  - Sylheti Keywords: `dhoro`, `dekha`, `ne`, `jodi`, `naile`, `ghuro`, `ghur`
+  - Booleans: `hasa` (true), `misa` (false)
+  - Logical Operators: `ar` (and), `ernay` (or), `nabe` (not)
+  - Identifiers, integer constants, double-quoted string literals, and arithmetic/relational operators (`^`, `+`, `-`, `*`, `/`, `==`, `!=`, `<=`, `>=`).
 - Handles escape sequences (`\n`, `\t`, `\"`, `\\`), skips whitespace, and strips single-line `//` comments.
 
 ### 2. Syntax Analysis & AST Generation (`parser.y`)
 - Built using **GNU Bison**.
 - Parses the token stream according to formal context-free grammar rules.
-- Builds an Abstract Syntax Tree (AST) composed of typed nodes (`AST_DECLARATION`, `AST_ASSIGNMENT`, `AST_PRINT_EXPR`, `AST_PRINT_STRING`, `AST_INPUT`, `AST_IF`, `AST_WHILE`, `AST_BLOCK`, `AST_EXPRESSION`).
+- Builds an Abstract Syntax Tree (AST) composed of typed nodes (`AST_DECLARATION`, `AST_ASSIGNMENT`, `AST_PRINT_EXPR`, `AST_PRINT_STRING`, `AST_INPUT`, `AST_IF`, `AST_WHILE`, `AST_FOR`, `AST_BLOCK`, `AST_EXPRESSION`).
 
 ### 3. Runtime Interpreter Engine (`parser.y`)
 - Recursively evaluates the AST statement lists.
@@ -50,30 +54,32 @@ The Nyz-Lang compiler pipeline consists of three core stages:
 
 ---
 
-## ⚡ Key Features
+## ⚡ Sylheti Vocabulary & Key Features
 
-- **Custom Vocabulary**:
-  - `morphe`: Variable declaration with optional initializer (e.g., `morphe x = 5;`).
-  - `manifest`: Print output for expressions and string literals (e.g., `manifest "Hello!";`).
-  - `absorb`: Runtime user input reading from standard input into a variable (e.g., `absorb x;`).
-  - `perchance` / `otherwise`: If-Else conditional branching.
-  - `persist`: While loop control structure.
-- **Unique Exponentiation Operator (`^`)**:
-  - Native right-associative exponentiation operator `^` (e.g., `2 ^ 3` evaluates to `8`, `2 ^ 3 ^ 2` evaluates to `2 ^ (3 ^ 2) = 512`).
-  - Strict operator precedence (`^` > `*`/`/` > `+`/`-` > Relational).
-- **String Literal Output**: Supports escape characters (`\n`, `\t`, `\"`) in `manifest` statements.
+| Concept | Sylheti Keyword | Meaning / Action | Nyz-Lang Code Example |
+| :--- | :--- | :--- | :--- |
+| **Variable Declaration** | `dhoro` | *"Suppose / Let"* | `dhoro x = 10;` |
+| **Print Output** | `dekha` | *"Show / Display"* | `dekha "Assalamu Alaikum!";` |
+| **Runtime Input** | `ne` | *"Take / Get"* | `ne x;` |
+| **Conditional (If)** | `jodi` | *"If"* | `jodi (x > 5) { ... }` |
+| **Otherwise (Else)** | `naile` | *"Otherwise / Else"* | `jodi (x > 5) { ... } naile { ... }` |
+| **While Loop** | `ghuro` | *"Repeat / Loop while"* | `ghuro (x > 0) { ... }` |
+| **For Loop** | `ghur` | *"Loop for count"* | `ghur (dhoro i = 0; i < 5; i = i + 1) { ... }` |
+| **Boolean True/False** | `hasa` / `misa` | *"True / False"* | `dhoro active = hasa;` |
+| **Logical Operators** | `ar` / `ernay` / `nabe` | *"And / Or / Not"* | `jodi (x > 0 ar y > 0) { ... }` |
+| **Exponentiation Operator** | `^` | Power calculation (right-associative) | `dhoro p = 2 ^ 3 ^ 2; // 512` |
 
 ---
 
 ## 🛠️ Technical Challenges & Solutions
 
 ### 1. Resolving Dangling-Else Ambiguity
-- **Challenge**: The optional `otherwise` clause in `perchance (cond) { stmts } otherwise { stmts }` creates potential shift/reduce grammar conflicts in LALR parsers.
-- **Solution**: Explicit precedence tokens `%nonassoc LOWER_THAN_OTHERWISE` and `%nonassoc OTHERWISE` were declared in `parser.y`, forcing Bison to resolve `otherwise` binding to the innermost `perchance` statement with **0 shift/reduce conflicts**.
+- **Challenge**: The optional `naile` clause in `jodi (cond) { stmts } naile { stmts }` creates potential shift/reduce grammar conflicts in LALR parsers.
+- **Solution**: Explicit precedence tokens `%nonassoc LOWER_THAN_NAILE` and `%nonassoc NAILE` were declared in `parser.y`, forcing Bison to resolve `naile` binding to the innermost `jodi` statement.
 
-### 2. Handling Nested Statement Blocks
-- **Challenge**: Supporting arbitrarily nested `{ ... }` block statements without memory loss or list corruption.
-- **Solution**: Designed a dynamic doubly-referenced `StatementList` structure (`head` and `tail` pointers) linked inside AST nodes (`AST_BLOCK` and `AST_PROGRAM`), allowing linear statement append operations and recursive traversal.
+### 2. Supporting Ghur (For Loop) & Ghuro (While Loop)
+- **Challenge**: Supporting both counter-based loops (`ghur (init; cond; step) { ... }`) and condition-based loops (`ghuro (cond) { ... }`) in the parser.
+- **Solution**: Created a dedicated `AST_FOR` AST node and custom `for_init` / `for_step` grammar productions in Bison, enabling full `for` loop syntax evaluation.
 
 ### 3. Exponentiation Precedence & Associativity
 - **Challenge**: Math conventions dictate that exponentiation is right-associative (`a^b^c = a^(b^c)`) and takes higher precedence than multiplication.
@@ -102,8 +108,6 @@ This compiles `lexer.l` and `parser.y` into the executable `nyz_lang` (`nyz_lang
 ```bash
 ./nyz_lang examples/demo.nyz
 ./nyz_lang examples/calculator.nyz
-./nyz_lang examples/keywords_test.nyz
-./nyz_lang examples/power_test.nyz
 ```
 
 ### Clean Build Artifacts

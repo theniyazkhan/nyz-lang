@@ -1,37 +1,37 @@
-manifest "=== Nyz-Lang Interactive Calculator ===";
+dekha "=== Sylheti Nyz-Lang Calculator ===";
 
-manifest "Enter first number (a):";
-morphe a;
-absorb a;
+dekha "Enter first number (a):";
+dhoro a;
+ne a;
 
-manifest "Enter second number (b):";
-morphe b;
-absorb b;
+dekha "Enter second number (b):";
+dhoro b;
+ne b;
 
-manifest "--- Arithmetic Results ---";
+dekha "--- Calculation Results ---";
 
-morphe sum = a + b;
-manifest "a + b =";
-manifest sum;
+dhoro sum = a + b;
+dekha "a + b =";
+dekha sum;
 
-morphe diff = a - b;
-manifest "a - b =";
-manifest diff;
+dhoro diff = a - b;
+dekha "a - b =";
+dekha diff;
 
-morphe prod = a * b;
-manifest "a * b =";
-manifest prod;
+dhoro prod = a * b;
+dekha "a * b =";
+dekha prod;
 
-perchance (b != 0) {
-  morphe quot = a / b;
-  manifest "a / b =";
-  manifest quot;
-} otherwise {
-  manifest "a / b = Division by zero avoided!";
+jodi (b != 0) {
+  dhoro quot = a / b;
+  dekha "a / b =";
+  dekha quot;
+} naile {
+  dekha "a / b = Division by zero avoided!";
 }
 
-morphe pwr = a ^ b;
-manifest "a ^ b =";
-manifest pwr;
+dhoro pwr = a ^ b;
+dekha "a ^ b =";
+dekha pwr;
 
-manifest "=== Calculation Finished ===";
+dekha "=== Finished ===";

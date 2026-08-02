@@ -12,6 +12,7 @@ typedef enum {
   AST_INPUT,
   AST_IF,
   AST_WHILE,
+  AST_FOR,
   AST_BLOCK,
   AST_EXPRESSION
 } AstType;
@@ -35,7 +36,10 @@ typedef enum {
   OP_GT,
   OP_GE,
   OP_EQ,
-  OP_NE
+  OP_NE,
+  OP_AND,
+  OP_OR,
+  OP_NOT
 } OpType;
 
 typedef struct Ast Ast;
@@ -76,6 +80,12 @@ typedef struct Ast {
       Ast *condition;
       Ast *body;
     } while_loop;
+    struct {
+      Ast *init;
+      Ast *condition;
+      Ast *step;
+      Ast *body;
+    } for_loop;
     struct {
       StatementList *body;
     } block;
@@ -123,6 +133,7 @@ static Ast *make_print_string_node(char *str);
 static Ast *make_input_node(char *name);
 static Ast *make_if_node(Ast *condition, Ast *body, Ast *else_body);
 static Ast *make_while_node(Ast *condition, Ast *body);
+static Ast *make_for_node(Ast *init, Ast *condition, Ast *step, Ast *body);
 static Ast *make_block_node(StatementList *body);
 static Ast *make_binary_expr(OpType op, Ast *left, Ast *right);
 static Ast *make_unary_expr(OpType op, Ast *child);
@@ -150,23 +161,24 @@ typedef struct StatementList StatementList;
   StatementList *stmt_list;
 }
 
-%token INT PRINT WHILE
-%token MORPHE MANIFEST ABSORB PERCHANCE OTHERWISE PERSIST
+%token DHORO DEKHA NE JODI NAILE GHURO GHUR AR ERNAY NABE
 %token <int_value> INTEGER
 %token <string_value> IDENTIFIER STRING
 %token EQ NEQ LE GE POW
 
-%nonassoc LOWER_THAN_OTHERWISE
-%nonassoc OTHERWISE
+%nonassoc LOWER_THAN_NAILE
+%nonassoc NAILE
 
+%left ERNAY
+%left AR
 %left EQ NEQ
 %left '<' LE '>' GE
 %left '+' '-'
 %left '*' '/'
 %right POW '^'
-%right UMINUS
+%right NABE UMINUS
 
-%type <ast> program statement declaration assignment print_statement input_statement perchance_statement persist_statement block expression
+%type <ast> program statement declaration assignment print_statement input_statement jodi_statement ghuro_statement ghur_statement for_init for_step block expression
 %type <stmt_list> statement_list
 %start program
 
@@ -193,22 +205,17 @@ statement:
   | assignment { $$ = $1; }
   | print_statement { $$ = $1; }
   | input_statement { $$ = $1; }
-  | perchance_statement { $$ = $1; }
-  | persist_statement { $$ = $1; }
+  | jodi_statement { $$ = $1; }
+  | ghuro_statement { $$ = $1; }
+  | ghur_statement { $$ = $1; }
   | block { $$ = $1; }
   ;
 
 declaration:
-    MORPHE IDENTIFIER ';' {
+    DHORO IDENTIFIER ';' {
       $$ = make_declaration_node($2, NULL);
     }
-  | MORPHE IDENTIFIER '=' expression ';' {
-      $$ = make_declaration_node($2, $4);
-    }
-  | INT IDENTIFIER ';' {
-      $$ = make_declaration_node($2, NULL);
-    }
-  | INT IDENTIFIER '=' expression ';' {
+  | DHORO IDENTIFIER '=' expression ';' {
       $$ = make_declaration_node($2, $4);
     }
   ;
@@ -220,41 +227,56 @@ assignment:
   ;
 
 print_statement:
-    MANIFEST expression ';' {
+    DEKHA expression ';' {
       $$ = make_print_expr_node($2);
     }
-  | MANIFEST STRING ';' {
+  | DEKHA STRING ';' {
       $$ = make_print_string_node($2);
     }
-  | PRINT '(' expression ')' ';' {
+  | DEKHA '(' expression ')' ';' {
       $$ = make_print_expr_node($3);
     }
-  | PRINT '(' STRING ')' ';' {
+  | DEKHA '(' STRING ')' ';' {
       $$ = make_print_string_node($3);
     }
   ;
 
 input_statement:
-    ABSORB IDENTIFIER ';' {
+    NE IDENTIFIER ';' {
       $$ = make_input_node($2);
     }
   ;
 
-perchance_statement:
-    PERCHANCE '(' expression ')' statement %prec LOWER_THAN_OTHERWISE {
+jodi_statement:
+    JODI '(' expression ')' statement %prec LOWER_THAN_NAILE {
       $$ = make_if_node($3, $5, NULL);
     }
-  | PERCHANCE '(' expression ')' statement OTHERWISE statement {
+  | JODI '(' expression ')' statement NAILE statement {
       $$ = make_if_node($3, $5, $7);
     }
   ;
 
-persist_statement:
-    PERSIST '(' expression ')' statement {
+ghuro_statement:
+    GHURO '(' expression ')' statement {
       $$ = make_while_node($3, $5);
     }
-  | WHILE '(' expression ')' statement {
-      $$ = make_while_node($3, $5);
+  ;
+
+for_init:
+    DHORO IDENTIFIER '=' expression ';' { $$ = make_declaration_node($2, $4); }
+  | DHORO IDENTIFIER ';'                { $$ = make_declaration_node($2, NULL); }
+  | IDENTIFIER '=' expression ';'       { $$ = make_assignment_node($1, $3); }
+  | ';'                                 { $$ = NULL; }
+  ;
+
+for_step:
+    IDENTIFIER '=' expression { $$ = make_assignment_node($1, $3); }
+  | %empty { $$ = NULL; }
+  ;
+
+ghur_statement:
+    GHUR '(' for_init expression ';' for_step ')' statement {
+      $$ = make_for_node($3, $4, $6, $8);
     }
   ;
 
@@ -265,22 +287,25 @@ block:
   ;
 
 expression:
-    expression '+' expression { $$ = make_binary_expr(OP_ADD, $1, $3); }
-  | expression '-' expression { $$ = make_binary_expr(OP_SUB, $1, $3); }
-  | expression '*' expression { $$ = make_binary_expr(OP_MUL, $1, $3); }
-  | expression '/' expression { $$ = make_binary_expr(OP_DIV, $1, $3); }
-  | expression POW expression { $$ = make_binary_expr(OP_POW, $1, $3); }
-  | expression '^' expression { $$ = make_binary_expr(OP_POW, $1, $3); }
-  | expression '<' expression { $$ = make_binary_expr(OP_LT, $1, $3); }
-  | expression LE expression  { $$ = make_binary_expr(OP_LE, $1, $3); }
-  | expression '>' expression { $$ = make_binary_expr(OP_GT, $1, $3); }
-  | expression GE expression  { $$ = make_binary_expr(OP_GE, $1, $3); }
-  | expression EQ expression  { $$ = make_binary_expr(OP_EQ, $1, $3); }
-  | expression NEQ expression { $$ = make_binary_expr(OP_NE, $1, $3); }
+    expression '+' expression   { $$ = make_binary_expr(OP_ADD, $1, $3); }
+  | expression '-' expression   { $$ = make_binary_expr(OP_SUB, $1, $3); }
+  | expression '*' expression   { $$ = make_binary_expr(OP_MUL, $1, $3); }
+  | expression '/' expression   { $$ = make_binary_expr(OP_DIV, $1, $3); }
+  | expression POW expression   { $$ = make_binary_expr(OP_POW, $1, $3); }
+  | expression '^' expression   { $$ = make_binary_expr(OP_POW, $1, $3); }
+  | expression '<' expression   { $$ = make_binary_expr(OP_LT, $1, $3); }
+  | expression LE expression    { $$ = make_binary_expr(OP_LE, $1, $3); }
+  | expression '>' expression   { $$ = make_binary_expr(OP_GT, $1, $3); }
+  | expression GE expression    { $$ = make_binary_expr(OP_GE, $1, $3); }
+  | expression EQ expression    { $$ = make_binary_expr(OP_EQ, $1, $3); }
+  | expression NEQ expression   { $$ = make_binary_expr(OP_NE, $1, $3); }
+  | expression AR expression    { $$ = make_binary_expr(OP_AND, $1, $3); }
+  | expression ERNAY expression { $$ = make_binary_expr(OP_OR, $1, $3); }
+  | NABE expression             { $$ = make_unary_expr(OP_NOT, $2); }
   | '-' expression %prec UMINUS { $$ = make_unary_expr(OP_SUB, $2); }
-  | '(' expression ')'        { $$ = $2; }
-  | INTEGER                   { $$ = create_expression_int($1); }
-  | IDENTIFIER                { $$ = create_expression_variable($1); }
+  | '(' expression ')'          { $$ = $2; }
+  | INTEGER                     { $$ = create_expression_int($1); }
+  | IDENTIFIER                  { $$ = create_expression_variable($1); }
   ;
 
 %%
@@ -362,6 +387,16 @@ static Ast *make_while_node(Ast *condition, Ast *body) {
   node->type = AST_WHILE;
   node->as.while_loop.condition = condition;
   node->as.while_loop.body = body;
+  return node;
+}
+
+static Ast *make_for_node(Ast *init, Ast *condition, Ast *step, Ast *body) {
+  Ast *node = calloc(1, sizeof(*node));
+  node->type = AST_FOR;
+  node->as.for_loop.init = init;
+  node->as.for_loop.condition = condition;
+  node->as.for_loop.step = step;
+  node->as.for_loop.body = body;
   return node;
 }
 
@@ -496,11 +531,16 @@ static int evaluate_expression(Ast *expr) {
         case OP_GE: return left >= right;
         case OP_EQ: return left == right;
         case OP_NE: return left != right;
+        case OP_AND: return (left && right) ? 1 : 0;
+        case OP_OR:  return (left || right) ? 1 : 0;
+        case OP_NOT: return (!left) ? 1 : 0;
       }
       break;
     }
-    case EXPR_NEGATE:
-      return -evaluate_expression(expr->as.expression.data.unary.child);
+    case EXPR_NEGATE: {
+      int val = evaluate_expression(expr->as.expression.data.unary.child);
+      return -val;
+    }
     case EXPR_STRING:
       return 0;
   }
@@ -557,6 +597,18 @@ static void execute_statement(Ast *stmt) {
     case AST_WHILE: {
       while (evaluate_expression(stmt->as.while_loop.condition)) {
         execute_statement(stmt->as.while_loop.body);
+      }
+      break;
+    }
+    case AST_FOR: {
+      if (stmt->as.for_loop.init) {
+        execute_statement(stmt->as.for_loop.init);
+      }
+      while (evaluate_expression(stmt->as.for_loop.condition)) {
+        execute_statement(stmt->as.for_loop.body);
+        if (stmt->as.for_loop.step) {
+          execute_statement(stmt->as.for_loop.step);
+        }
       }
       break;
     }

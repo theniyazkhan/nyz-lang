@@ -34,16 +34,20 @@ static char *copy_quoted_string(const char *text) {
 %}
 
 %%
-"morphe"               { return MORPHE; }
-"manifest"             { return MANIFEST; }
-"absorb"               { return ABSORB; }
-"perchance"            { return PERCHANCE; }
-"otherwise"            { return OTHERWISE; }
-"persist"              { return PERSIST; }
+"dhoro"|"morphe"|"let"|"int"       { return DHORO; }
+"dekha"|"manifest"|"show"|"print"  { return DEKHA; }
+"ne"|"absorb"|"input"              { return NE; }
+"jodi"|"perchance"|"if"            { return JODI; }
+"naile"|"otherwise"|"else"         { return NAILE; }
+"ghuro"|"persist"|"while"          { return GHURO; }
+"ghur"|"for"                       { return GHUR; }
 
-"int"       { return INT; }
-"print"     { return PRINT; }
-"while"     { return WHILE; }
+"hasa"|"true"                      { yylval.int_value = 1; return INTEGER; }
+"misa"|"false"                     { yylval.int_value = 0; return INTEGER; }
+
+"ar"|"&&"                          { return AR; }
+"ernay"|"||"                       { return ERNAY; }
+"na be"|"nabe"|"!"                 { return NABE; }
 
 "=="        { return EQ; }
 "!="        { return NEQ; }
