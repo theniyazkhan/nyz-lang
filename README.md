@@ -1,16 +1,16 @@
-# Nyz-Lang (.nyz)
+# Sylheti Programming Language (.syl)
 
-**Nyz-Lang** is a custom programming language featuring a unique **Sylheti-inspired domain vocabulary**, a Flex lexical scanner, a Bison LALR parser, an Abstract Syntax Tree (AST) generator, and a C execution interpreter.
+**Sylheti** is a custom programming language featuring a unique **Sylheti domain vocabulary**, a Flex lexical scanner, a Bison LALR parser, an Abstract Syntax Tree (AST) generator, and a C execution interpreter.
 
 ---
 
 ## 🏛️ Architecture Overview
 
-The Nyz-Lang compiler pipeline consists of three core stages:
+The Sylheti compiler pipeline consists of three core stages:
 
 ```
                   +-------------------+
-                  |  Source (.nyz)    |
+                  |  Source (.syl)    |
                   +---------+---------+
                             |
                             v
@@ -34,7 +34,7 @@ The Nyz-Lang compiler pipeline consists of three core stages:
 
 ### 1. Lexical Analysis (`lexer.l`)
 - Built using **Flex**.
-- Converts `.nyz` raw source code into structured tokens:
+- Converts `.syl` raw source code into structured tokens:
   - Sylheti Keywords: `dhoro`, `dekha`, `ne`, `jodi`, `naile`, `ghuro`, `ghur`
   - Booleans: `hasa` (true), `misa` (false)
   - Logical Operators: `ar` (and), `ernay` (or), `nabe` (not)
@@ -56,7 +56,7 @@ The Nyz-Lang compiler pipeline consists of three core stages:
 
 ## ⚡ Sylheti Vocabulary & Key Features
 
-| Concept | Sylheti Keyword | Meaning / Action | Nyz-Lang Code Example |
+| Concept | Sylheti Keyword | Meaning / Action | Sylheti Code Example |
 | :--- | :--- | :--- | :--- |
 | **Variable Declaration** | `dhoro` | *"Suppose / Let"* | `dhoro x = 10;` |
 | **Print Output** | `dekha` | *"Show / Display"* | `dekha "Assalamu Alaikum!";` |
@@ -102,12 +102,12 @@ Run from the repository root:
 make
 ```
 
-This compiles `lexer.l` and `parser.y` into the executable `nyz_lang` (`nyz_lang.exe` on Windows).
+This compiles `lexer.l` and `parser.y` into the executable `sylheti` (`sylheti.exe` on Windows).
 
 ### Run Example Scripts
 ```bash
-./nyz_lang examples/demo.nyz
-./nyz_lang examples/calculator.nyz
+./sylheti examples/demo.syl
+./sylheti examples/calculator.syl
 ```
 
 ### Clean Build Artifacts

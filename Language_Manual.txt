@@ -1,9 +1,9 @@
 ========================================================================
-                      NYZ-LANG LANGUAGE MANUAL (.nyz)
+                      SYLHETI LANGUAGE MANUAL (.syl)
 ========================================================================
 
-Nyz-Lang is a domain-specific programming language compiled and interpreted
-using Flex and Bison. Nyz-Lang features a unique Sylheti-inspired vocabulary
+Sylheti is a domain-specific programming language compiled and interpreted
+using Flex and Bison. Sylheti features a unique Sylheti domain vocabulary
 with support for right-associative exponentiation, logical operators, and loops.
 
 
@@ -21,13 +21,13 @@ Compilation:
 
     make
 
-  This produces the executable `nyz_lang` (`nyz_lang.exe` on Windows).
+  This produces the executable `sylheti` (`sylheti.exe` on Windows).
 
 Execution:
-  Pass any valid `.nyz` script file as an argument:
+  Pass any valid `.syl` script file as an argument:
 
-    ./nyz_lang examples/demo.nyz
-    ./nyz_lang examples/calculator.nyz
+    ./sylheti examples/demo.syl
+    ./sylheti examples/calculator.syl
 
 Clean Build Artifacts:
   To remove temporary build files and executables:
@@ -39,7 +39,7 @@ Clean Build Artifacts:
 ==============================
 
 +-------------------+--------------------+-----------------------------------------------+
-| Standard Concept  | Nyz-Lang Keyword   | Example Syntax                                |
+| Standard Concept  | Sylheti Keyword    | Example Syntax                                |
 +-------------------+--------------------+-----------------------------------------------+
 | Variable Decl     | dhoro              | dhoro x = 10;                                 |
 | Print Output      | dekha              | dekha x;  OR  dekha "Hello\n";                |
@@ -54,9 +54,6 @@ Clean Build Artifacts:
 | Logical OR        | ernay              | jodi (x > 0 ernay y > 0) { ... }              |
 | Logical NOT       | nabe               | jodi (nabe (x == 0)) { ... }                  |
 +-------------------+--------------------+-----------------------------------------------+
-
-*Note: Legacy/simplified keywords (`morphe`, `let`, `manifest`, `show`, `absorb`, `input`,
-`perchance`, `if`, `otherwise`, `else`, `persist`, `while`) are also supported.*
 
 
 3. FORMAL EBNF SYNTAX RULES

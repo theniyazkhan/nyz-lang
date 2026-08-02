@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
 BISON ?= bison
 FLEX ?= flex
-TARGET = nyz_lang
+TARGET = sylheti
 
 ifeq ($(OS),Windows_NT)
     TARGET_EXE = $(TARGET).exe
