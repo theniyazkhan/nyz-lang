@@ -1,7 +1,16 @@
-manifest "--- Power Operator Precedence & Associativity Test ---";
+dekha "=== Sylheti Exponentiation (Power ^) Test ===";
 
-morphe a = 2 ^ 3 ^ 2;
-manifest a;
+dhoro base = 2;
+dhoro exp = 3;
+dhoro result = base ^ exp;
 
-morphe b = 3 + 2 ^ 3 * 4;
-manifest b;
+dekha "2 ^ 3 =";
+dekha result;
+
+dhoro pow_assoc = 2 ^ 3 ^ 2;
+dekha "2 ^ 3 ^ 2 (Right-Associative) =";
+dekha pow_assoc;
+
+dhoro expr_power = 3 + 2 ^ 3 * 4;
+dekha "3 + 2 ^ 3 * 4 (Precedence) =";
+dekha expr_power;

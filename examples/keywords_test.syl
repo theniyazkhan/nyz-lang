@@ -1,20 +1,28 @@
-manifest "--- Nyz-Lang Keyword & Operator Test ---";
+dekha "=== Sylheti Language Keywords & Operators Test ===";
 
-morphe base = 2;
-morphe exp = 3;
-morphe pow_res = base ^ exp;
-manifest pow_res;
+dhoro a = 10;
+dhoro b = 20;
 
-perchance (pow_res == 8) {
-  manifest "Exponentiation 2^3 correctly equals 8!";
-} otherwise {
-  manifest "Exponentiation failed!";
+jodi (a < b ar hasa) {
+  dekha "a is smaller than b!";
+} naile {
+  dekha "a is greater or equal!";
 }
 
-morphe counter = 3;
-persist (counter > 0) {
-  manifest counter;
-  counter = counter - 1;
+jodi (nabe (a == b)) {
+  dekha "a and b are NOT equal (hasa)!";
 }
 
-manifest "--- Loop Complete ---";
+dekha "--- Ghuro Loop (While) ---";
+dhoro count = 3;
+ghuro (count > 0) {
+  dekha count;
+  count = count - 1;
+}
+
+dekha "--- Ghur Loop (For) ---";
+ghur (dhoro i = 1; i <= 3; i = i + 1) {
+  dekha i;
+}
+
+dekha "=== Keywords Test Passed ===";

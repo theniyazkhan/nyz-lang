@@ -1,10 +1,10 @@
-manifest "Enter a number:";
-morphe user_num;
-absorb user_num;
+dekha "Ekta shongkha daw (Enter a number):";
+dhoro user_num;
+ne user_num;
 
-manifest "You entered:";
-manifest user_num;
+dekha "Apni disen (You entered):";
+dekha user_num;
 
-morphe squared = user_num ^ 2;
-manifest "Its square is:";
-manifest squared;
+dhoro squared = user_num ^ 2;
+dekha "Erar borgofol (Its square is):";
+dekha squared;

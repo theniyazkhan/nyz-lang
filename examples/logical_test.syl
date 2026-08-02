@@ -1,0 +1,21 @@
+dekha "=== Sylheti Logical Operators Test ===";
+
+dhoro x = 15;
+dhoro y = 30;
+
+jodi (x > 10 ar y > 20) {
+  dekha "Both conditions TRUE (ar)!";
+}
+
+jodi (x == 100 ernay y == 30) {
+  dekha "At least one condition TRUE (ernay)!";
+}
+
+jodi (nabe (x == 0)) {
+  dekha "Condition is NOT zero (nabe)!";
+}
+
+dhoro flag = hasa;
+jodi (flag == hasa) {
+  dekha "Boolean HASA is TRUE!";
+}

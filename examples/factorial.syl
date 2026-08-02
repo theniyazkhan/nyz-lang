@@ -1,0 +1,13 @@
+dekha "=== Sylheti Factorial Calculator ===";
+
+dekha "Ekta shongkha (n) daw:";
+dhoro n;
+ne n;
+
+dhoro fact = 1;
+ghur (dhoro i = 1; i <= n; i = i + 1) {
+  fact = fact * i;
+}
+
+dekha "Factorial of n is:";
+dekha fact;
