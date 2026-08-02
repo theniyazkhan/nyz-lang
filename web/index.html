@@ -3,29 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sylheti Programming Language Playground & Compiler</title>
+  <title>Sylheti-Lang Interactive Playground</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #0b0f19;
-      --card-bg: #131b2e;
-      --panel-bg: #182238;
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
+      --bg: #090d16;
+      --card-bg: #111827;
+      --panel-bg: #1f2937;
+      --accent: #06b6d4;
+      --accent-hover: #0891b2;
       --success: #10b981;
-      --text: #f3f4f6;
+      --text: #f9fafb;
       --text-muted: #9ca3af;
-      --border: #263352;
-      --console-bg: #090d16;
+      --border: #374151;
+      --console-bg: #030712;
+      --kw-color: #38bdf8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Outfit', sans-serif;
-      background-color: var(--bg-color);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -35,48 +36,53 @@
     header {
       background: var(--card-bg);
       border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
+      padding: 0.85rem 1.25rem;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo-container {
-      display: flex;
       align-items: center;
       gap: 0.75rem;
     }
 
-    .logo-badge {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      font-weight: 700;
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
     }
 
-    h1 { font-size: 1.4rem; font-weight: 600; }
+    .brand-badge {
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      color: #ffffff;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
 
-    .header-actions {
+    h1 { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+
+    .header-controls {
       display: flex;
-      gap: 1rem;
+      flex-wrap: wrap;
       align-items: center;
+      gap: 0.5rem;
     }
 
     select, button {
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.9rem;
+      font-family: inherit;
+      font-size: 0.85rem;
       border-radius: 8px;
-      padding: 0.5rem 1rem;
+      padding: 0.45rem 0.85rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease-in-out;
     }
 
     select {
       background: var(--panel-bg);
       color: var(--text);
       border: 1px solid var(--border);
+      outline: none;
     }
 
     .btn-run {
@@ -87,12 +93,12 @@
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
     .btn-run:hover {
+      background: linear-gradient(135deg, #059669, #047857);
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
     }
 
     .btn-clear {
@@ -103,16 +109,58 @@
 
     .btn-clear:hover { color: var(--text); background: var(--border); }
 
+    .suggestions-bar {
+      background: #0d1322;
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .suggestions-bar::-webkit-scrollbar { height: 4px; }
+    .suggestions-bar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .sug-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kw-chip {
+      background: var(--panel-bg);
+      color: var(--kw-color);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .kw-chip:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
     main {
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
-      padding: 1rem 2rem;
-      height: calc(100vh - 80px);
+      padding: 1rem 1.25rem;
+      min-height: 0;
     }
 
-    .editor-card, .console-card {
+    .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -123,8 +171,8 @@
 
     .card-header {
       background: var(--panel-bg);
-      padding: 0.75rem 1rem;
-      font-size: 0.85rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-muted);
       display: flex;
@@ -136,13 +184,14 @@
     .editor-wrapper {
       flex: 1;
       position: relative;
+      min-height: 280px;
     }
 
     textarea#codeEditor {
       width: 100%;
       height: 100%;
       background: transparent;
-      color: #e5e7eb;
+      color: #f3f4f6;
       font-family: 'Fira Code', monospace;
       font-size: 0.95rem;
       line-height: 1.6;
@@ -158,11 +207,12 @@
       background: var(--console-bg);
       color: #10b981;
       font-family: 'Fira Code', monospace;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       line-height: 1.6;
       padding: 1rem;
       overflow-y: auto;
       white-space: pre-wrap;
+      min-height: 280px;
     }
 
     .console-input-row {
@@ -184,111 +234,110 @@
       border: 1px solid var(--border);
       color: white;
       font-family: 'Fira Code', monospace;
-      padding: 0.4rem 0.8rem;
+      padding: 0.45rem 0.75rem;
       border-radius: 6px;
       outline: none;
+      font-size: 0.9rem;
     }
 
-    .keyword-cheat-sheet {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      padding: 0.75rem 2rem;
-      background: var(--card-bg);
-      border-top: 1px solid var(--border);
-      font-size: 0.8rem;
-    }
-
-    .kw-tag {
-      background: var(--panel-bg);
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      color: #a5b4fc;
-      font-family: 'Fira Code', monospace;
-    }
-
-    @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; height: auto; }
-      textarea#codeEditor { min-height: 300px; }
-      #consoleOutput { min-height: 250px; }
+    /* Mobile Responsive Breakpoint */
+    @media (max-width: 768px) {
+      header { padding: 0.75rem 1rem; }
+      h1 { font-size: 1.1rem; }
+      main {
+        grid-template-columns: 1fr;
+        padding: 0.75rem 1rem;
+        height: auto;
+      }
+      .editor-wrapper, #consoleOutput { min-height: 220px; }
+      .header-controls { width: 100%; justify-content: space-between; }
+      select { flex: 1; }
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="logo-container">
+    <div class="brand">
       <h1>Sylheti Compiler</h1>
-      <span class="logo-badge">.syl</span>
+      <span class="brand-badge">.syl</span>
     </div>
-    <div class="header-actions">
+    <div class="header-controls">
       <select id="presetSelect" onchange="loadPreset()">
-        <option value="demo">Demo Program</option>
-        <option value="calculator">Interactive Calculator</option>
-        <option value="factorial">Factorial Calculator</option>
-        <option value="power">Exponentiation (^)</option>
+        <option value="simple">Simple Input Demo</option>
+        <option value="calculator">Calculator</option>
+        <option value="factorial">Factorial</option>
+        <option value="power">Power ^</option>
         <option value="logical">Logical Operators</option>
       </select>
-      <button class="btn-clear" onclick="clearConsole()">Clear Output</button>
-      <button class="btn-run" onclick="runSylhetiCode()">
-        ▶ Run Code
-      </button>
+      <button class="btn-clear" onclick="clearConsole()">Clear</button>
+      <button class="btn-run" onclick="runSylhetiCode()">▶ Run</button>
     </div>
   </header>
 
+  <div class="suggestions-bar">
+    <span class="sug-label">Tap to insert:</span>
+    <span class="kw-chip" onclick="insertKeyword('dekha ')">dekha</span>
+    <span class="kw-chip" onclick="insertKeyword('dhoro ')">dhoro</span>
+    <span class="kw-chip" onclick="insertKeyword('ne ')">ne</span>
+    <span class="kw-chip" onclick="insertKeyword('jodi ')">jodi</span>
+    <span class="kw-chip" onclick="insertKeyword('naile ')">naile</span>
+    <span class="kw-chip" onclick="insertKeyword('ghuro ')">ghuro</span>
+    <span class="kw-chip" onclick="insertKeyword('ghur ')">ghur</span>
+    <span class="kw-chip" onclick="insertKeyword('hasa')">hasa</span>
+    <span class="kw-chip" onclick="insertKeyword('misa')">misa</span>
+    <span class="kw-chip" onclick="insertKeyword('ar ')">ar</span>
+    <span class="kw-chip" onclick="insertKeyword('ernay ')">ernay</span>
+    <span class="kw-chip" onclick="insertKeyword('nabe ')">nabe</span>
+    <span class="kw-chip" onclick="insertKeyword(' ^ ')">^</span>
+  </div>
+
   <main>
-    <div class="editor-card">
+    <div class="card">
       <div class="card-header">
-        <span>SYLHETI CODE EDITOR</span>
-        <span>examples/script.syl</span>
+        <span>SYLHETI EDITOR</span>
+        <span>script.syl</span>
       </div>
       <div class="editor-wrapper">
         <textarea id="codeEditor" spellcheck="false"></textarea>
       </div>
     </div>
 
-    <div class="console-card">
+    <div class="card">
       <div class="card-header">
-        <span>TERMINAL OUTPUT</span>
+        <span>CONSOLE OUTPUT</span>
         <span id="statusBadge" style="color: #10b981;">Ready</span>
       </div>
-      <div id="consoleOutput">=== Sylheti Language Interactive Playground ===\nClick "Run Code" to execute script.</div>
+      <div id="consoleOutput">=== Sylheti-Lang Interactive Playground ===\nClick "Run" or tap ▶ Run to execute script.</div>
       <div class="console-input-row" id="inputRow">
         <span style="color: #10b981; font-family: monospace;">Input ›</span>
-        <input type="text" id="userInput" placeholder="Enter integer input and press Enter..." onkeydown="handleInputSubmit(event)">
+        <input type="number" id="userInput" placeholder="Enter integer and press Enter..." onkeydown="handleInputSubmit(event)">
       </div>
     </div>
   </main>
 
-  <div class="keyword-cheat-sheet">
-    <span style="color: var(--text-muted); font-weight: 600;">Keywords:</span>
-    <span class="kw-tag">dhoro (let)</span>
-    <span class="kw-tag">dekha (print)</span>
-    <span class="kw-tag">ne (input)</span>
-    <span class="kw-tag">jodi (if)</span>
-    <span class="kw-tag">naile (else)</span>
-    <span class="kw-tag">ghuro (while)</span>
-    <span class="kw-tag">ghur (for)</span>
-    <span class="kw-tag">hasa (true)</span>
-    <span class="kw-tag">misa (false)</span>
-    <span class="kw-tag">ar (and)</span>
-    <span class="kw-tag">ernay (or)</span>
-    <span class="kw-tag">nabe (not)</span>
-    <span class="kw-tag">^ (power)</span>
-  </div>
-
   <script>
     const presets = {
-      demo: `dekha "=== Sylheti-Lang Demonstration ===";\n\ndhoro a = 5;\ndhoro b = 3;\ndhoro pow = a ^ b;\n\ndekha "Calculated 5 ^ 3:";\ndekha pow;\n\njodi (pow > 100 ar hasa) {\n  dekha "Result is greater than 100!";\n} naile {\n  dekha "Result is smaller!";\n}\n\ndekha "--- Ghur (For Loop) Countdown ---";\nghur (dhoro i = 5; i > 0; i = i - 1) {\n  dekha "Count:";\n  dekha i;\n}\n\ndekha "=== Sylheti Demo Finished ===";`,
-      calculator: `dekha "=== Sylheti-Lang Calculator ===";\n\ndekha "Enter first number (a):";\ndhoro a;\nne a;\n\ndekha "Enter second number (b):";\ndhoro b;\nne b;\n\ndekha "--- Calculation Results ---";\ndhoro sum = a + b;\ndekha "a + b =";\ndekha sum;\n\ndhoro pwr = a ^ b;\ndekha "a ^ b =";\ndekha pwr;`,
-      factorial: `dekha "=== Sylheti Factorial Calculator ===";\n\ndekha "Enter number (n):";\ndhoro n;\nne n;\n\ndhoro fact = 1;\nghur (dhoro i = 1; i <= n; i = i + 1) {\n  fact = fact * i;\n}\n\ndekha "Factorial is:";\ndekha fact;`,
-      power: `dekha "=== Exponentiation Power ^ Test ===";\n\ndhoro base = 2;\ndhoro exp = 3;\ndhoro res = base ^ exp;\ndekha "2 ^ 3 =";\ndekha res;\n\ndhoro assoc = 2 ^ 3 ^ 2;\ndekha "2 ^ 3 ^ 2 (Right-Associative) =";\ndekha assoc;`,
+      simple: `dekha "Ekta shongkha dein (Enter a number):";\ndhoro x;\nne x;\n\ndekha "Afne disoin (You entered):";\ndekha x;`,
+      calculator: `dekha "=== Sylheti Calculator ===";\n\ndekha "Enter first number (a):";\ndhoro a;\nne a;\n\ndekha "Enter second number (b):";\ndhoro b;\nne b;\n\ndhoro sum = a + b;\ndekha "a + b =";\ndekha sum;\n\ndhoro pwr = a ^ b;\ndekha "a ^ b =";\ndekha pwr;`,
+      factorial: `dekha "=== Factorial Calculator ===";\n\ndekha "Ekta shongkha (n) dein:";\ndhoro n;\nne n;\n\ndhoro fact = 1;\nghur (dhoro i = 1; i <= n; i = i + 1) {\n  fact = fact * i;\n}\n\ndekha "Factorial is:";\ndekha fact;`,
+      power: `dekha "=== Exponentiation Power ^ Test ===";\n\ndhoro base = 2;\ndhoro exp = 3;\ndhoro res = base ^ exp;\ndekha "2 ^ 3 =";\ndekha res;\n\ndhoro assoc = 2 ^ 3 ^ 2;\ndekha "2 ^ 3 ^ 2 =";\ndekha assoc;`,
       logical: `dekha "=== Logical Operators Test ===";\n\ndhoro x = 15;\ndhoro y = 30;\n\njodi (x > 10 ar y > 20) {\n  dekha "Both TRUE (ar)!";\n}\n\njodi (x == 100 ernay y == 30) {\n  dekha "At least one TRUE (ernay)!";\n}`
     };
 
     function loadPreset() {
       const selected = document.getElementById("presetSelect").value;
       document.getElementById("codeEditor").value = presets[selected] || "";
+    }
+
+    function insertKeyword(kw) {
+      const editor = document.getElementById("codeEditor");
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const text = editor.value;
+      editor.value = text.substring(0, start) + kw + text.substring(end);
+      editor.focus();
+      editor.selectionStart = editor.selectionEnd = start + kw.length;
     }
 
     function clearConsole() {
@@ -327,7 +376,7 @@
       }
     }
 
-    // Sylheti AST Interpreter Engine in JavaScript
+    // Sylheti AST Interpreter Engine
     async function runSylhetiCode() {
       clearConsole();
       document.getElementById("statusBadge").textContent = "Running...";
@@ -342,7 +391,6 @@
           let line = lines[i].trim();
           if (!line || line.startsWith('//')) continue;
 
-          // Simple block parsing & execution engine matching Sylheti tokens
           if (line.startsWith('dekha ')) {
             let exprStr = line.substring(6).replace(/;$/, '').trim();
             if (exprStr.startsWith('"') && exprStr.endsWith('"')) {
@@ -370,7 +418,7 @@
             }
           }
         }
-        document.getElementById("statusBadge").textContent = "Success (Exit 0)";
+        document.getElementById("statusBadge").textContent = "Exit 0";
         document.getElementById("statusBadge").style.color = "#10b981";
       } catch (err) {
         printConsole("Runtime Error: " + err.message);
@@ -381,7 +429,6 @@
 
     function evaluate(expr, symbols) {
       expr = expr.replace(/\bhasa\b/g, '1').replace(/\bmisa\b/g, '0');
-      // Handle power operator ^
       while (expr.includes('^')) {
         let parts = expr.split('^');
         let right = evaluate(parts.pop(), symbols);
@@ -389,7 +436,6 @@
         return Math.pow(left, right);
       }
 
-      // Replace variable names with symbol values
       Object.keys(symbols).forEach(key => {
         const regex = new RegExp(`\\b${key}\\b`, 'g');
         expr = expr.replace(regex, symbols[key]);
@@ -403,7 +449,7 @@
       }
     }
 
-    // Initialize
+    // Initialize with simple preset
     loadPreset();
   </script>
 </body>
