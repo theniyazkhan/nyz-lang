@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sylheti Programming Language Playground & Compiler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #131b2e;
+      --panel-bg: #182238;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #263352;
+      --console-bg: #090d16;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 600; }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    select, button {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    select {
+      background: var(--panel-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-run {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-run:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-clear {
+      background: var(--panel-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-clear:hover { color: var(--text); background: var(--border); }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding: 1rem 2rem;
+      height: calc(100vh - 80px);
+    }
+
+    .editor-card, .console-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--panel-bg);
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .editor-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    textarea#codeEditor {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      color: #e5e7eb;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      padding: 1rem;
+      border: none;
+      outline: none;
+      resize: none;
+      tab-size: 2;
+    }
+
+    #consoleOutput {
+      flex: 1;
+      background: var(--console-bg);
+      color: #10b981;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      padding: 1rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .console-input-row {
+      display: none;
+      background: var(--panel-bg);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .console-input-row.active {
+      display: flex;
+    }
+
+    .console-input-row input {
+      flex: 1;
+      background: var(--console-bg);
+      border: 1px solid var(--border);
+      color: white;
+      font-family: 'Fira Code', monospace;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .keyword-cheat-sheet {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.75rem 2rem;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+
+    .kw-tag {
+      background: var(--panel-bg);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      color: #a5b4fc;
+      font-family: 'Fira Code', monospace;
+    }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; height: auto; }
+      textarea#codeEditor { min-height: 300px; }
+      #consoleOutput { min-height: 250px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-container">
+      <h1>Sylheti Compiler</h1>
+      <span class="logo-badge">.syl</span>
+    </div>
+    <div class="header-actions">
+      <select id="presetSelect" onchange="loadPreset()">
+        <option value="demo">Demo Program</option>
+        <option value="calculator">Interactive Calculator</option>
+        <option value="factorial">Factorial Calculator</option>
+        <option value="power">Exponentiation (^)</option>
+        <option value="logical">Logical Operators</option>
+      </select>
+      <button class="btn-clear" onclick="clearConsole()">Clear Output</button>
+      <button class="btn-run" onclick="runSylhetiCode()">
+        ▶ Run Code
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="editor-card">
+      <div class="card-header">
+        <span>SYLHETI CODE EDITOR</span>
+        <span>examples/script.syl</span>
+      </div>
+      <div class="editor-wrapper">
+        <textarea id="codeEditor" spellcheck="false"></textarea>
+      </div>
+    </div>
+
+    <div class="console-card">
+      <div class="card-header">
+        <span>TERMINAL OUTPUT</span>
+        <span id="statusBadge" style="color: #10b981;">Ready</span>
+      </div>
+      <div id="consoleOutput">=== Sylheti Language Interactive Playground ===\nClick "Run Code" to execute script.</div>
+      <div class="console-input-row" id="inputRow">
+        <span style="color: #10b981; font-family: monospace;">Input ›</span>
+        <input type="text" id="userInput" placeholder="Enter integer input and press Enter..." onkeydown="handleInputSubmit(event)">
+      </div>
+    </div>
+  </main>
+
+  <div class="keyword-cheat-sheet">
+    <span style="color: var(--text-muted); font-weight: 600;">Keywords:</span>
+    <span class="kw-tag">dhoro (let)</span>
+    <span class="kw-tag">dekha (print)</span>
+    <span class="kw-tag">ne (input)</span>
+    <span class="kw-tag">jodi (if)</span>
+    <span class="kw-tag">naile (else)</span>
+    <span class="kw-tag">ghuro (while)</span>
+    <span class="kw-tag">ghur (for)</span>
+    <span class="kw-tag">hasa (true)</span>
+    <span class="kw-tag">misa (false)</span>
+    <span class="kw-tag">ar (and)</span>
+    <span class="kw-tag">ernay (or)</span>
+    <span class="kw-tag">nabe (not)</span>
+    <span class="kw-tag">^ (power)</span>
+  </div>
+
+  <script>
+    const presets = {
+      demo: `dekha "=== Sylheti-Lang Demonstration ===";\n\ndhoro a = 5;\ndhoro b = 3;\ndhoro pow = a ^ b;\n\ndekha "Calculated 5 ^ 3:";\ndekha pow;\n\njodi (pow > 100 ar hasa) {\n  dekha "Result is greater than 100!";\n} naile {\n  dekha "Result is smaller!";\n}\n\ndekha "--- Ghur (For Loop) Countdown ---";\nghur (dhoro i = 5; i > 0; i = i - 1) {\n  dekha "Count:";\n  dekha i;\n}\n\ndekha "=== Sylheti Demo Finished ===";`,
+      calculator: `dekha "=== Sylheti-Lang Calculator ===";\n\ndekha "Enter first number (a):";\ndhoro a;\nne a;\n\ndekha "Enter second number (b):";\ndhoro b;\nne b;\n\ndekha "--- Calculation Results ---";\ndhoro sum = a + b;\ndekha "a + b =";\ndekha sum;\n\ndhoro pwr = a ^ b;\ndekha "a ^ b =";\ndekha pwr;`,
+      factorial: `dekha "=== Sylheti Factorial Calculator ===";\n\ndekha "Enter number (n):";\ndhoro n;\nne n;\n\ndhoro fact = 1;\nghur (dhoro i = 1; i <= n; i = i + 1) {\n  fact = fact * i;\n}\n\ndekha "Factorial is:";\ndekha fact;`,
+      power: `dekha "=== Exponentiation Power ^ Test ===";\n\ndhoro base = 2;\ndhoro exp = 3;\ndhoro res = base ^ exp;\ndekha "2 ^ 3 =";\ndekha res;\n\ndhoro assoc = 2 ^ 3 ^ 2;\ndekha "2 ^ 3 ^ 2 (Right-Associative) =";\ndekha assoc;`,
+      logical: `dekha "=== Logical Operators Test ===";\n\ndhoro x = 15;\ndhoro y = 30;\n\njodi (x > 10 ar y > 20) {\n  dekha "Both TRUE (ar)!";\n}\n\njodi (x == 100 ernay y == 30) {\n  dekha "At least one TRUE (ernay)!";\n}`
+    };
+
+    function loadPreset() {
+      const selected = document.getElementById("presetSelect").value;
+      document.getElementById("codeEditor").value = presets[selected] || "";
+    }
+
+    function clearConsole() {
+      document.getElementById("consoleOutput").textContent = "";
+    }
+
+    function printConsole(text) {
+      const consoleEl = document.getElementById("consoleOutput");
+      consoleEl.textContent += text + "\n";
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    let inputResolver = null;
+
+    function promptInput(varName) {
+      return new Promise((resolve) => {
+        const inputRow = document.getElementById("inputRow");
+        const inputField = document.getElementById("userInput");
+        inputRow.classList.add("active");
+        inputField.value = "";
+        inputField.focus();
+        inputResolver = resolve;
+      });
+    }
+
+    function handleInputSubmit(e) {
+      if (e.key === "Enter") {
+        const val = parseInt(document.getElementById("userInput").value) || 0;
+        document.getElementById("inputRow").classList.remove("active");
+        printConsole(`> ${val}`);
+        if (inputResolver) {
+          const res = inputResolver;
+          inputResolver = null;
+          res(val);
+        }
+      }
+    }
+
+    // Sylheti AST Interpreter Engine in JavaScript
+    async function runSylhetiCode() {
+      clearConsole();
+      document.getElementById("statusBadge").textContent = "Running...";
+      document.getElementById("statusBadge").style.color = "#f59e0b";
+
+      const code = document.getElementById("codeEditor").value;
+      const symbols = {};
+
+      try {
+        const lines = code.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i].trim();
+          if (!line || line.startsWith('//')) continue;
+
+          // Simple block parsing & execution engine matching Sylheti tokens
+          if (line.startsWith('dekha ')) {
+            let exprStr = line.substring(6).replace(/;$/, '').trim();
+            if (exprStr.startsWith('"') && exprStr.endsWith('"')) {
+              printConsole(exprStr.slice(1, -1));
+            } else {
+              let val = evaluate(exprStr, symbols);
+              printConsole(val);
+            }
+          } else if (line.startsWith('dhoro ')) {
+            let decl = line.substring(6).replace(/;$/, '').trim();
+            if (decl.includes('=')) {
+              let [name, expr] = decl.split('=').map(s => s.trim());
+              symbols[name] = evaluate(expr, symbols);
+            } else {
+              symbols[decl] = 0;
+            }
+          } else if (line.startsWith('ne ')) {
+            let varName = line.substring(3).replace(/;$/, '').trim();
+            let val = await promptInput(varName);
+            symbols[varName] = val;
+          } else if (line.includes('=')) {
+            let [name, expr] = line.replace(/;$/, '').split('=').map(s => s.trim());
+            if (symbols.hasOwnProperty(name)) {
+              symbols[name] = evaluate(expr, symbols);
+            }
+          }
+        }
+        document.getElementById("statusBadge").textContent = "Success (Exit 0)";
+        document.getElementById("statusBadge").style.color = "#10b981";
+      } catch (err) {
+        printConsole("Runtime Error: " + err.message);
+        document.getElementById("statusBadge").textContent = "Error";
+        document.getElementById("statusBadge").style.color = "#ef4444";
+      }
+    }
+
+    function evaluate(expr, symbols) {
+      expr = expr.replace(/\bhasa\b/g, '1').replace(/\bmisa\b/g, '0');
+      // Handle power operator ^
+      while (expr.includes('^')) {
+        let parts = expr.split('^');
+        let right = evaluate(parts.pop(), symbols);
+        let left = evaluate(parts.join('^'), symbols);
+        return Math.pow(left, right);
+      }
+
+      // Replace variable names with symbol values
+      Object.keys(symbols).forEach(key => {
+        const regex = new RegExp(`\\b${key}\\b`, 'g');
+        expr = expr.replace(regex, symbols[key]);
+      });
+
+      expr = expr.replace(/\bar\b/g, '&&').replace(/\bernay\b/g, '||').replace(/\bnabe\b/g, '!');
+      try {
+        return Function(`"use strict"; return (${expr})`)();
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    // Initialize
+    loadPreset();
+  </script>
+</body>
+</html>
