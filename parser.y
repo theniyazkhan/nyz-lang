@@ -7,15 +7,18 @@ typedef enum {
   AST_PROGRAM,
   AST_DECLARATION,
   AST_ASSIGNMENT,
-  AST_PRINT,
-  AST_BLOCK,
+  AST_PRINT_EXPR,
+  AST_PRINT_STRING,
+  AST_INPUT,
+  AST_IF,
   AST_WHILE,
-  AST_EXPRESSION,
-  AST_CONDITION
+  AST_BLOCK,
+  AST_EXPRESSION
 } AstType;
 
 typedef enum {
   EXPR_INT,
+  EXPR_STRING,
   EXPR_VARIABLE,
   EXPR_BINARY,
   EXPR_NEGATE
@@ -26,17 +29,14 @@ typedef enum {
   OP_SUB,
   OP_MUL,
   OP_DIV,
-  OP_NEG
+  OP_POW,
+  OP_LT,
+  OP_LE,
+  OP_GT,
+  OP_GE,
+  OP_EQ,
+  OP_NE
 } OpType;
-
-typedef enum {
-  COND_LT,
-  COND_LE,
-  COND_GT,
-  COND_GE,
-  COND_EQ,
-  COND_NE
-} CondType;
 
 typedef struct Ast Ast;
 typedef struct StatementList {
@@ -60,18 +60,30 @@ typedef struct Ast {
     } assignment;
     struct {
       Ast *expr;
-    } print_stmt;
+    } print_expr;
     struct {
-      StatementList *body;
-    } block;
+      char *str;
+    } print_string;
+    struct {
+      char *name;
+    } input_stmt;
+    struct {
+      Ast *condition;
+      Ast *body;
+      Ast *else_body;
+    } if_stmt;
     struct {
       Ast *condition;
       Ast *body;
     } while_loop;
     struct {
+      StatementList *body;
+    } block;
+    struct {
       ExprType kind;
       union {
         int int_value;
+        char *str_value;
         char *name;
         struct {
           OpType op;
@@ -83,11 +95,6 @@ typedef struct Ast {
         } unary;
       } data;
     } expression;
-    struct {
-      CondType op;
-      Ast *left;
-      Ast *right;
-    } condition;
   } as;
   Ast *next;
 } Ast;
@@ -111,21 +118,24 @@ static void append_statement(StatementList *list, Ast *stmt);
 static Ast *make_program_node(StatementList *body);
 static Ast *make_declaration_node(char *name, Ast *initializer);
 static Ast *make_assignment_node(char *name, Ast *value);
-static Ast *make_print_node(Ast *expr);
-static Ast *make_block_node(StatementList *body);
+static Ast *make_print_expr_node(Ast *expr);
+static Ast *make_print_string_node(char *str);
+static Ast *make_input_node(char *name);
+static Ast *make_if_node(Ast *condition, Ast *body, Ast *else_body);
 static Ast *make_while_node(Ast *condition, Ast *body);
+static Ast *make_block_node(StatementList *body);
 static Ast *make_binary_expr(OpType op, Ast *left, Ast *right);
 static Ast *make_unary_expr(OpType op, Ast *child);
 static Ast *create_expression_int(int value);
 static Ast *create_expression_variable(char *name);
-static Ast *make_condition_node(CondType op, Ast *left, Ast *right);
 static int evaluate_expression(Ast *expr);
-static int evaluate_condition(Ast *cond);
 static void execute_statement(Ast *stmt);
 static void execute_statement_list(StatementList *list);
 static void execute_program(Ast *program);
 static int lookup_symbol(const char *name, int *value);
 static void assign_symbol(const char *name, int value);
+static int evaluate_power(int base, int exp);
+static void print_unescaped_string(const char *str);
 %}
 
 %code requires {
@@ -143,14 +153,20 @@ typedef struct StatementList StatementList;
 %token INT PRINT WHILE
 %token MORPHE MANIFEST ABSORB PERCHANCE OTHERWISE PERSIST
 %token <int_value> INTEGER
-%token <string_value> IDENTIFIER
-%token EQ NEQ LE GE
+%token <string_value> IDENTIFIER STRING
+%token EQ NEQ LE GE POW
+
+%nonassoc LOWER_THAN_OTHERWISE
+%nonassoc OTHERWISE
+
+%left EQ NEQ
+%left '<' LE '>' GE
 %left '+' '-'
 %left '*' '/'
+%right POW '^'
 %right UMINUS
 
-%type <ast> program statement declaration assignment print_statement while_statement block expression condition
-%type <ast> factor term
+%type <ast> program statement declaration assignment print_statement input_statement perchance_statement persist_statement block expression
 %type <stmt_list> statement_list
 %start program
 
@@ -165,7 +181,9 @@ program:
 statement_list:
     %empty { $$ = create_statement_list(); }
   | statement_list statement {
-      append_statement($1, $2);
+      if ($2 != NULL) {
+        append_statement($1, $2);
+      }
       $$ = $1;
     }
   ;
@@ -174,22 +192,20 @@ statement:
     declaration { $$ = $1; }
   | assignment { $$ = $1; }
   | print_statement { $$ = $1; }
-  | while_statement { $$ = $1; }
+  | input_statement { $$ = $1; }
+  | perchance_statement { $$ = $1; }
+  | persist_statement { $$ = $1; }
   | block { $$ = $1; }
-  | keyword_statement { $$ = NULL; }
-  ;
-
-keyword_statement:
-    MORPHE
-  | MANIFEST
-  | ABSORB
-  | PERCHANCE
-  | OTHERWISE
-  | PERSIST
   ;
 
 declaration:
-    INT IDENTIFIER ';' {
+    MORPHE IDENTIFIER ';' {
+      $$ = make_declaration_node($2, NULL);
+    }
+  | MORPHE IDENTIFIER '=' expression ';' {
+      $$ = make_declaration_node($2, $4);
+    }
+  | INT IDENTIFIER ';' {
       $$ = make_declaration_node($2, NULL);
     }
   | INT IDENTIFIER '=' expression ';' {
@@ -204,13 +220,40 @@ assignment:
   ;
 
 print_statement:
-    PRINT '(' expression ')' ';' {
-      $$ = make_print_node($3);
+    MANIFEST expression ';' {
+      $$ = make_print_expr_node($2);
+    }
+  | MANIFEST STRING ';' {
+      $$ = make_print_string_node($2);
+    }
+  | PRINT '(' expression ')' ';' {
+      $$ = make_print_expr_node($3);
+    }
+  | PRINT '(' STRING ')' ';' {
+      $$ = make_print_string_node($3);
     }
   ;
 
-while_statement:
-    WHILE '(' condition ')' statement {
+input_statement:
+    ABSORB IDENTIFIER ';' {
+      $$ = make_input_node($2);
+    }
+  ;
+
+perchance_statement:
+    PERCHANCE '(' expression ')' statement %prec LOWER_THAN_OTHERWISE {
+      $$ = make_if_node($3, $5, NULL);
+    }
+  | PERCHANCE '(' expression ')' statement OTHERWISE statement {
+      $$ = make_if_node($3, $5, $7);
+    }
+  ;
+
+persist_statement:
+    PERSIST '(' expression ')' statement {
+      $$ = make_while_node($3, $5);
+    }
+  | WHILE '(' expression ')' statement {
       $$ = make_while_node($3, $5);
     }
   ;
@@ -221,32 +264,23 @@ block:
     }
   ;
 
-condition:
-    expression '<' expression { $$ = make_condition_node(COND_LT, $1, $3); }
-  | expression LE expression { $$ = make_condition_node(COND_LE, $1, $3); }
-  | expression '>' expression { $$ = make_condition_node(COND_GT, $1, $3); }
-  | expression GE expression { $$ = make_condition_node(COND_GE, $1, $3); }
-  | expression EQ expression { $$ = make_condition_node(COND_EQ, $1, $3); }
-  | expression NEQ expression { $$ = make_condition_node(COND_NE, $1, $3); }
-  ;
-
 expression:
-    expression '+' term { $$ = make_binary_expr(OP_ADD, $1, $3); }
-  | expression '-' term { $$ = make_binary_expr(OP_SUB, $1, $3); }
-  | term { $$ = $1; }
-  ;
-
-term:
-    term '*' factor { $$ = make_binary_expr(OP_MUL, $1, $3); }
-  | term '/' factor { $$ = make_binary_expr(OP_DIV, $1, $3); }
-  | factor { $$ = $1; }
-  ;
-
-factor:
-    INTEGER { $$ = create_expression_int($1); }
-  | IDENTIFIER { $$ = create_expression_variable($1); }
-  | '(' expression ')' { $$ = $2; }
-  | '-' factor { $$ = make_unary_expr(OP_NEG, $2); }
+    expression '+' expression { $$ = make_binary_expr(OP_ADD, $1, $3); }
+  | expression '-' expression { $$ = make_binary_expr(OP_SUB, $1, $3); }
+  | expression '*' expression { $$ = make_binary_expr(OP_MUL, $1, $3); }
+  | expression '/' expression { $$ = make_binary_expr(OP_DIV, $1, $3); }
+  | expression POW expression { $$ = make_binary_expr(OP_POW, $1, $3); }
+  | expression '^' expression { $$ = make_binary_expr(OP_POW, $1, $3); }
+  | expression '<' expression { $$ = make_binary_expr(OP_LT, $1, $3); }
+  | expression LE expression  { $$ = make_binary_expr(OP_LE, $1, $3); }
+  | expression '>' expression { $$ = make_binary_expr(OP_GT, $1, $3); }
+  | expression GE expression  { $$ = make_binary_expr(OP_GE, $1, $3); }
+  | expression EQ expression  { $$ = make_binary_expr(OP_EQ, $1, $3); }
+  | expression NEQ expression { $$ = make_binary_expr(OP_NE, $1, $3); }
+  | '-' expression %prec UMINUS { $$ = make_unary_expr(OP_SUB, $2); }
+  | '(' expression ')'        { $$ = $2; }
+  | INTEGER                   { $$ = create_expression_int($1); }
+  | IDENTIFIER                { $$ = create_expression_variable($1); }
   ;
 
 %%
@@ -293,17 +327,33 @@ static Ast *make_assignment_node(char *name, Ast *value) {
   return node;
 }
 
-static Ast *make_print_node(Ast *expr) {
+static Ast *make_print_expr_node(Ast *expr) {
   Ast *node = calloc(1, sizeof(*node));
-  node->type = AST_PRINT;
-  node->as.print_stmt.expr = expr;
+  node->type = AST_PRINT_EXPR;
+  node->as.print_expr.expr = expr;
   return node;
 }
 
-static Ast *make_block_node(StatementList *body) {
+static Ast *make_print_string_node(char *str) {
   Ast *node = calloc(1, sizeof(*node));
-  node->type = AST_BLOCK;
-  node->as.block.body = body;
+  node->type = AST_PRINT_STRING;
+  node->as.print_string.str = str;
+  return node;
+}
+
+static Ast *make_input_node(char *name) {
+  Ast *node = calloc(1, sizeof(*node));
+  node->type = AST_INPUT;
+  node->as.input_stmt.name = name;
+  return node;
+}
+
+static Ast *make_if_node(Ast *condition, Ast *body, Ast *else_body) {
+  Ast *node = calloc(1, sizeof(*node));
+  node->type = AST_IF;
+  node->as.if_stmt.condition = condition;
+  node->as.if_stmt.body = body;
+  node->as.if_stmt.else_body = else_body;
   return node;
 }
 
@@ -312,6 +362,13 @@ static Ast *make_while_node(Ast *condition, Ast *body) {
   node->type = AST_WHILE;
   node->as.while_loop.condition = condition;
   node->as.while_loop.body = body;
+  return node;
+}
+
+static Ast *make_block_node(StatementList *body) {
+  Ast *node = calloc(1, sizeof(*node));
+  node->type = AST_BLOCK;
+  node->as.block.body = body;
   return node;
 }
 
@@ -361,13 +418,40 @@ static char *duplicate_string(const char *text) {
   return copy;
 }
 
-static Ast *make_condition_node(CondType op, Ast *left, Ast *right) {
-  Ast *node = calloc(1, sizeof(*node));
-  node->type = AST_CONDITION;
-  node->as.condition.op = op;
-  node->as.condition.left = left;
-  node->as.condition.right = right;
-  return node;
+static int evaluate_power(int base, int exp) {
+  if (exp < 0) {
+    fprintf(stderr, "Runtime Error: Negative exponent (%d) is not supported for integers\n", exp);
+    exit(1);
+  }
+  int result = 1;
+  while (exp > 0) {
+    if (exp & 1) {
+      result *= base;
+    }
+    base *= base;
+    exp >>= 1;
+  }
+  return result;
+}
+
+static void print_unescaped_string(const char *str) {
+  if (!str) return;
+  for (size_t i = 0; str[i] != '\0'; i++) {
+    if (str[i] == '\\' && str[i + 1] != '\0') {
+      i++;
+      switch (str[i]) {
+        case 'n': putchar('\n'); break;
+        case 't': putchar('\t'); break;
+        case 'r': putchar('\r'); break;
+        case '\\': putchar('\\'); break;
+        case '"': putchar('"'); break;
+        default: putchar(str[i]); break;
+      }
+    } else {
+      putchar(str[i]);
+    }
+  }
+  putchar('\n');
 }
 
 static int evaluate_expression(Ast *expr) {
@@ -386,7 +470,7 @@ static int evaluate_expression(Ast *expr) {
     case EXPR_VARIABLE: {
       int value = 0;
       if (!lookup_symbol(expr->as.expression.data.name, &value)) {
-        fprintf(stderr, "Undefined variable: %s\n", expr->as.expression.data.name);
+        fprintf(stderr, "Runtime Error: Undefined variable '%s'\n", expr->as.expression.data.name);
         exit(1);
       }
       return value;
@@ -400,32 +484,25 @@ static int evaluate_expression(Ast *expr) {
         case OP_MUL: return left * right;
         case OP_DIV:
           if (right == 0) {
-            fprintf(stderr, "Division by zero\n");
+            fprintf(stderr, "Runtime Error: Division by zero\n");
             exit(1);
           }
           return left / right;
-        case OP_NEG:
-          return -left;
+        case OP_POW:
+          return evaluate_power(left, right);
+        case OP_LT: return left < right;
+        case OP_LE: return left <= right;
+        case OP_GT: return left > right;
+        case OP_GE: return left >= right;
+        case OP_EQ: return left == right;
+        case OP_NE: return left != right;
       }
+      break;
     }
     case EXPR_NEGATE:
       return -evaluate_expression(expr->as.expression.data.unary.child);
-  }
-
-  return 0;
-}
-
-static int evaluate_condition(Ast *cond) {
-  int left = evaluate_expression(cond->as.condition.left);
-  int right = evaluate_expression(cond->as.condition.right);
-
-  switch (cond->as.condition.op) {
-    case COND_LT: return left < right;
-    case COND_LE: return left <= right;
-    case COND_GT: return left > right;
-    case COND_GE: return left >= right;
-    case COND_EQ: return left == right;
-    case COND_NE: return left != right;
+    case EXPR_STRING:
+      return 0;
   }
 
   return 0;
@@ -450,18 +527,41 @@ static void execute_statement(Ast *stmt) {
       assign_symbol(stmt->as.assignment.name, value);
       break;
     }
-    case AST_PRINT: {
-      int value = evaluate_expression(stmt->as.print_stmt.expr);
+    case AST_PRINT_EXPR: {
+      int value = evaluate_expression(stmt->as.print_expr.expr);
       printf("%d\n", value);
+      break;
+    }
+    case AST_PRINT_STRING: {
+      print_unescaped_string(stmt->as.print_string.str);
+      break;
+    }
+    case AST_INPUT: {
+      int value = 0;
+      if (scanf("%d", &value) != 1) {
+        fprintf(stderr, "Runtime Error: Failed to read integer input for '%s'\n", stmt->as.input_stmt.name);
+        exit(1);
+      }
+      assign_symbol(stmt->as.input_stmt.name, value);
+      break;
+    }
+    case AST_IF: {
+      int cond_val = evaluate_expression(stmt->as.if_stmt.condition);
+      if (cond_val) {
+        execute_statement(stmt->as.if_stmt.body);
+      } else if (stmt->as.if_stmt.else_body) {
+        execute_statement(stmt->as.if_stmt.else_body);
+      }
+      break;
+    }
+    case AST_WHILE: {
+      while (evaluate_expression(stmt->as.while_loop.condition)) {
+        execute_statement(stmt->as.while_loop.body);
+      }
       break;
     }
     case AST_BLOCK:
       execute_statement_list(stmt->as.block.body);
-      break;
-    case AST_WHILE:
-      while (evaluate_condition(stmt->as.while_loop.condition)) {
-        execute_statement(stmt->as.while_loop.body);
-      }
       break;
     case AST_PROGRAM:
       execute_statement_list(stmt->as.program.body);
@@ -538,9 +638,3 @@ int main(int argc, char **argv) {
 int yywrap(void) {
   return 1;
 }
-
-int yyparse(void);
-
-int yylex(void);
-
-int main(int argc, char **argv);

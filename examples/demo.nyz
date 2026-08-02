@@ -1,0 +1,33 @@
+manifest "=== Nyz-Lang Feature Demonstration ===";
+
+manifest "Enter a starting base number:";
+morphe base;
+absorb base;
+
+manifest "Enter an exponent:";
+morphe exp;
+absorb exp;
+
+morphe result = base ^ exp;
+manifest "Calculated Power (base ^ exp):";
+manifest result;
+
+perchance (result > 100) {
+  manifest "Result is greater than 100!";
+} otherwise {
+  perchance (result == 100) {
+    manifest "Result is exactly equal to 100!";
+  } otherwise {
+    manifest "Result is less than 100!";
+  }
+}
+
+manifest "--- Countdown Loop ---";
+morphe counter = 5;
+persist (counter > 0) {
+  manifest "Count:";
+  manifest counter;
+  counter = counter - 1;
+}
+
+manifest "=== Demo Execution Complete ===";

@@ -1,0 +1,12 @@
+# Build Artifacts
+nyz_lang
+nyz_lang.exe
+nyz
+nyz.exe
+nyzix
+nyzix.exe
+parser.tab.c
+parser.tab.h
+lex.yy.c
+*.o
+*.exe

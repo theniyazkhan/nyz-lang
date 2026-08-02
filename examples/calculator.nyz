@@ -1,0 +1,37 @@
+manifest "=== Nyz-Lang Interactive Calculator ===";
+
+manifest "Enter first number (a):";
+morphe a;
+absorb a;
+
+manifest "Enter second number (b):";
+morphe b;
+absorb b;
+
+manifest "--- Arithmetic Results ---";
+
+morphe sum = a + b;
+manifest "a + b =";
+manifest sum;
+
+morphe diff = a - b;
+manifest "a - b =";
+manifest diff;
+
+morphe prod = a * b;
+manifest "a * b =";
+manifest prod;
+
+perchance (b != 0) {
+  morphe quot = a / b;
+  manifest "a / b =";
+  manifest quot;
+} otherwise {
+  manifest "a / b = Division by zero avoided!";
+}
+
+morphe pwr = a ^ b;
+manifest "a ^ b =";
+manifest pwr;
+
+manifest "=== Calculation Finished ===";

@@ -1,0 +1,10 @@
+manifest "Enter a number:";
+morphe user_num;
+absorb user_num;
+
+manifest "You entered:";
+manifest user_num;
+
+morphe squared = user_num ^ 2;
+manifest "Its square is:";
+manifest squared;

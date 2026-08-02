@@ -1,0 +1,20 @@
+manifest "--- Nyz-Lang Keyword & Operator Test ---";
+
+morphe base = 2;
+morphe exp = 3;
+morphe pow_res = base ^ exp;
+manifest pow_res;
+
+perchance (pow_res == 8) {
+  manifest "Exponentiation 2^3 correctly equals 8!";
+} otherwise {
+  manifest "Exponentiation failed!";
+}
+
+morphe counter = 3;
+persist (counter > 0) {
+  manifest counter;
+  counter = counter - 1;
+}
+
+manifest "--- Loop Complete ---";

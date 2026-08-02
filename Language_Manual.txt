@@ -1,0 +1,136 @@
+========================================================================
+                      NYZ-LANG LANGUAGE MANUAL (.nyz)
+========================================================================
+
+Nyz-Lang is a domain-specific programming language compiled and interpreted
+using Flex and Bison. This manual provides complete syntax rules, keyword
+mappings, EBNF grammar specifications, and usage examples.
+
+
+1. PREREQUISITES & COMPILATION INSTRUCTIONS
+===========================================
+
+Prerequisites:
+  - GCC (C compiler)
+  - GNU Make
+  - Flex (or win_flex)
+  - Bison (or win_bison)
+
+Compilation:
+  Run the build command from the repository root directory:
+
+    make
+
+  This produces the executable `nyz_lang` (`nyz_lang.exe` on Windows).
+
+Execution:
+  Pass any valid `.nyz` script file as an argument:
+
+    ./nyz_lang examples/demo.nyz
+    ./nyz_lang examples/calculator.nyz
+
+Clean Build Artifacts:
+  To remove temporary build files and executables:
+
+    make clean
+
+
+2. KEYWORD CHEAT SHEET
+======================
+
++-------------------+--------------------+-----------------------------------------------+
+| Standard Concept  | Nyz-Lang Keyword   | Example Syntax                                |
++-------------------+--------------------+-----------------------------------------------+
+| Variable Decl     | morphe             | morphe x = 10;                                |
+| Print Output      | manifest           | manifest x;  OR  manifest "Hello\n";          |
+| User Input        | absorb             | absorb x;                                     |
+| Conditional (If)  | perchance          | perchance (x > 0) { manifest x; }             |
+| Otherwise (Else)  | otherwise          | perchance (x > 0) { ... } otherwise { ... }   |
+| Loop (While)      | persist            | persist (count > 0) { count = count - 1; }    |
++-------------------+--------------------+-----------------------------------------------+
+
+
+3. FORMAL EBNF SYNTAX RULES
+===========================
+
+Program          ::= StatementList ;
+StatementList    ::= { Statement } ;
+
+Statement        ::= Declaration
+                   | Assignment
+                   | PrintStatement
+                   | InputStatement
+                   | PerchanceStatement
+                   | PersistStatement
+                   | Block ;
+
+Declaration      ::= "morphe" IDENTIFIER [ "=" Expression ] ";" ;
+Assignment       ::= IDENTIFIER "=" Expression ";" ;
+
+PrintStatement   ::= "manifest" Expression ";"
+                   | "manifest" STRING_LITERAL ";" ;
+
+InputStatement   ::= "absorb" IDENTIFIER ";" ;
+
+PerchanceStatement ::= "perchance" "(" Expression ")" Statement [ "otherwise" Statement ] ;
+PersistStatement   ::= "persist" "(" Expression ")" Statement ;
+
+Block            ::= "{" StatementList "}" ;
+
+Expression       ::= Expression "+" Term
+                   | Expression "-" Term
+                   | Term ;
+
+Term             ::= Term "*" Factor
+                   | Term "/" Factor
+                   | Factor ;
+
+Factor           ::= Primary "^" Factor    (* Exponentiation: Right-Associative *)
+                   | Primary ;
+
+Primary          ::= INTEGER
+                   | IDENTIFIER
+                   | "-" Primary
+                   | "(" Expression ")" ;
+
+RelationalOp     ::= "<" | "<=" | ">" | ">=" | "==" | "!=" ;
+
+
+4. CODE SNIPPET EXAMPLES
+========================
+
+Example 1: Variable Declaration and Arithmetic
+-----------------------------------------------
+morphe a = 5;
+morphe b = 3;
+morphe result = a ^ b;    // Calculates 5^3 = 125
+manifest "Result of 5^3:";
+manifest result;
+
+
+Example 2: Interactive Input and Conditional Logic
+--------------------------------------------------
+manifest "Please enter your age:";
+morphe age;
+absorb age;
+
+perchance (age >= 18) {
+  manifest "Access Granted: Adult";
+} otherwise {
+  manifest "Access Restricted: Minor";
+}
+
+
+Example 3: Counter Loop with Exponentiation
+------------------------------------------
+morphe n = 1;
+persist (n <= 5) {
+  morphe p = 2 ^ n;
+  manifest "2 ^";
+  manifest n;
+  manifest "=";
+  manifest p;
+  n = n + 1;
+}
+
+========================================================================

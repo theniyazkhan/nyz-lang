@@ -1,0 +1,7 @@
+manifest "--- Power Operator Precedence & Associativity Test ---";
+
+morphe a = 2 ^ 3 ^ 2;
+manifest a;
+
+morphe b = 3 + 2 ^ 3 * 4;
+manifest b;
