@@ -69,13 +69,14 @@
       gap: 0.5rem;
     }
 
-    select, button {
+    select, button, .btn-learn {
       font-family: inherit;
       font-size: 0.85rem;
       border-radius: 8px;
       padding: 0.45rem 0.85rem;
       cursor: pointer;
       transition: all 0.15s ease-in-out;
+      text-decoration: none;
     }
 
     select {
@@ -83,6 +84,22 @@
       color: var(--text);
       border: 1px solid var(--border);
       outline: none;
+    }
+
+    .btn-learn {
+      background: var(--panel-bg);
+      color: #a5b4fc;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-learn:hover {
+      background: #312e81;
+      color: white;
+      border-color: #6366f1;
     }
 
     .btn-run {
@@ -270,6 +287,9 @@
         <option value="power">Power ^</option>
         <option value="logical">Logical Operators</option>
       </select>
+      <a href="https://github.com/theniyazkhan/syleti_lang/blob/main/Language_Manual.txt" target="_blank" class="btn-learn">
+        📖 Learn
+      </a>
       <button class="btn-clear" onclick="clearConsole()">Clear</button>
       <button class="btn-run" onclick="runSylhetiCode()">▶ Run</button>
     </div>
