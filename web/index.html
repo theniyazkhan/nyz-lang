@@ -3,10 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sylheti-Lang Interactive Playground</title>
+  <title>Sylheti Programming Language &amp; Online Compiler | Developed by Niyaz Ahmad Khan</title>
+  <meta name="description" content="Sylheti Programming Language and Online Interactive Web Compiler created and developed by Niyaz Ahmad Khan. Write, execute, and test Sylheti dialect code online.">
+  <meta name="keywords" content="Sylheti language, Sylheti programming language, Sylheti compiler, Sylheti programming language developed by Niyaz Ahmad Khan, Sylheti code, Sylhet coder, Niyaz Ahmad Khan, Sylheti AST interpreter, Sylheti online compiler">
+  <meta name="author" content="Niyaz Ahmad Khan">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://theniyazkhan.bond/Sylheti-Compiler">
+  <link rel="icon" href="logo.png" type="image/png">
+
+  <!-- Open Graph / Social Media Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://theniyazkhan.bond/Sylheti-Compiler">
+  <meta property="og:title" content="Sylheti Programming Language &amp; Online Compiler">
+  <meta property="og:description" content="Sylheti Programming Language and Online Web Compiler developed by Niyaz Ahmad Khan. Try Sylheti code online!">
+  <meta property="og:image" content="https://theniyazkhan.bond/Sylheti-Compiler/logo.png">
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sylheti Programming Language &amp; Online Compiler">
+  <meta name="twitter:description" content="Sylheti Programming Language and Online Web Compiler developed by Niyaz Ahmad Khan.">
+  <meta name="twitter:image" content="https://theniyazkhan.bond/Sylheti-Compiler/logo.png">
+
+  <!-- Google Schema.org / JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Sylheti Programming Language & Compiler",
+    "alternateName": ["Sylheti Language", "Sylheti Programming Language", "Sylheti Compiler"],
+    "operatingSystem": "All",
+    "applicationCategory": "DeveloperApplication",
+    "url": "https://theniyazkhan.bond/Sylheti-Compiler",
+    "description": "Sylheti Programming Language and Online Interactive Web Compiler created and developed by Niyaz Ahmad Khan.",
+    "author": {
+      "@type": "Person",
+      "name": "Niyaz Ahmad Khan",
+      "url": "https://theniyazkhan.bond",
+      "jobTitle": "Software Engineer & Researcher",
+      "sameAs": [
+        "https://github.com/theniyazkhan",
+        "https://www.linkedin.com/in/theniyazkhan/",
+        "https://www.instagram.com/theniyazkhan/"
+      ]
+    },
+    "creator": {
+      "@type": "Person",
+      "name": "Niyaz Ahmad Khan",
+      "url": "https://theniyazkhan.bond"
+    },
+    "keywords": "Sylheti language, Sylheti programming language, Sylheti compiler, Sylheti code, Niyaz Ahmad Khan"
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #090d16;
@@ -202,22 +253,52 @@
       flex: 1;
       position: relative;
       min-height: 320px;
+      background: var(--console-bg);
+      border-radius: 0 0 12px 12px;
     }
 
-    textarea#codeEditor {
+    #codeEditor, #highlighting {
+      margin: 0;
+      padding: 1rem;
+      border: none;
       width: 100%;
       height: 100%;
-      background: transparent;
-      color: #f3f4f6;
       font-family: 'Fira Code', monospace;
       font-size: 0.95rem;
       line-height: 1.6;
-      padding: 1rem;
-      border: none;
-      outline: none;
-      resize: none;
       tab-size: 2;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-all;
+      position: absolute;
+      top: 0;
+      left: 0;
+      box-sizing: border-box;
+      overflow: auto;
     }
+
+    #codeEditor {
+      color: transparent;
+      background: transparent;
+      caret-color: var(--text);
+      resize: none;
+      outline: none;
+      z-index: 1;
+    }
+
+    #highlighting {
+      z-index: 0;
+      pointer-events: none;
+      color: #f3f4f6;
+    }
+
+    /* Syntax Highlighting Colors */
+    .syn-keyword { color: var(--kw-color); font-weight: 600; }
+    .syn-boolean { color: #f472b6; font-weight: 600; }
+    .syn-string { color: #34d399; }
+    .syn-number { color: #fbbf24; }
+    .syn-operator { color: #c084fc; }
+    .syn-comment { color: #6b7280; font-style: italic; }
 
     #consoleOutput {
       flex: 1;
@@ -257,6 +338,57 @@
       font-size: 0.9rem;
     }
 
+    footer {
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .footer-text {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .footer-link:hover {
+      background: #1e293b;
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+
+    .footer-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--accent);
+    }
+
     /* Mobile Responsive Breakpoint */
     @media (max-width: 768px) {
       header { padding: 0.75rem 1rem; }
@@ -281,6 +413,7 @@
     </div>
     <div class="header-controls">
       <select id="presetSelect" onchange="loadPreset()">
+        <option value="preview" selected>Preview (If/Else Demo)</option>
         <option value="factorial">Factorial (For Loop)</option>
         <option value="ghur_loop">For Loop (ghur)</option>
         <option value="ghuro_loop">While Loop (ghuro)</option>
@@ -321,7 +454,8 @@
         <span>script.syl</span>
       </div>
       <div class="editor-wrapper">
-        <textarea id="codeEditor" spellcheck="false"></textarea>
+        <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
+        <textarea id="codeEditor" spellcheck="false" oninput="updateHighlighting()" onscroll="syncScroll()" onkeydown="handleEditorKeyDown(event)"></textarea>
       </div>
     </div>
 
@@ -338,8 +472,19 @@
     </div>
   </main>
 
+  <footer>
+    <div class="footer-text">
+      <span>Sylheti Programming Language Developed by</span>
+      <a href="https://theniyazkhan.bond" target="_blank" rel="noopener noreferrer" class="footer-link">
+        <img src="logo.png" alt="Niyaz Ahmad Khan" class="footer-logo">
+        <span>Niyaz Ahmad Khan</span>
+      </a>
+    </div>
+  </footer>
+
   <script>
     const presets = {
+      preview: `dhoro mat = misa;\n\njodi(mat == hasa){\n    dekha "Thik ase";\n} naile {\n    dekha "Thik nay, bhejal";\n}`,
       factorial: `dekha "=== Factorial Calculator ===";\n\ndekha "Ekta shongkha (n) dein:";\ndhoro n;\nne n;\n\ndhoro fact = 1;\nghur (dhoro i = 1; i <= n; i = i + 1) {\n  fact = fact * i;\n}\n\ndekha "Factorial is:";\ndekha fact;`,
       ghur_loop: `dekha "=== For Loop (ghur) Countdown ===";\n\nghur (dhoro i = 5; i > 0; i = i - 1) {\n  dekha "Countdown:";\n  dekha i;\n}\ndekha "Lift off!";`,
       ghuro_loop: `dekha "=== While Loop (ghuro) Sum ===";\n\ndhoro count = 5;\ndhoro total = 0;\n\nghuro (count > 0) {\n  total = total + count;\n  count = count - 1;\n}\n\ndekha "Sum of 1 to 5:";\ndekha total;`,
@@ -352,6 +497,7 @@
     function loadPreset() {
       const selected = document.getElementById("presetSelect").value;
       document.getElementById("codeEditor").value = presets[selected] || "";
+      updateHighlighting();
     }
 
     function insertKeyword(kw) {
@@ -362,6 +508,7 @@
       editor.value = text.substring(0, start) + kw + text.substring(end);
       editor.focus();
       editor.selectionStart = editor.selectionEnd = start + kw.length;
+      updateHighlighting();
     }
 
     function clearConsole() {
@@ -929,6 +1076,109 @@
         document.getElementById("statusBadge").textContent = "Error";
         document.getElementById("statusBadge").style.color = "#ef4444";
       }
+    }
+
+    function handleEditorKeyDown(e) {
+      const textarea = e.target;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const val = textarea.value;
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        textarea.value = val.substring(0, start) + "  " + val.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
+        updateHighlighting();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+        const currentLine = val.substring(lineStart, start);
+        
+        const indentMatch = currentLine.match(/^\s*/);
+        let indent = indentMatch ? indentMatch[0] : '';
+        
+        const trimmedBeforeCursor = currentLine.trimEnd();
+        const addExtraIndent = trimmedBeforeCursor.endsWith('{');
+        if (addExtraIndent) {
+          indent += "  ";
+        }
+
+        const nextChar = val.charAt(start);
+        if (addExtraIndent && nextChar === '}') {
+          const prevIndent = indent.substring(2);
+          const insertText = '\n' + indent + '\n' + prevIndent;
+          textarea.value = val.substring(0, start) + insertText + val.substring(end);
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+        } else {
+          const insertText = '\n' + indent;
+          textarea.value = val.substring(0, start) + insertText + val.substring(end);
+          textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+        }
+        updateHighlighting();
+      }
+    }
+
+    function syncScroll() {
+      const ed = document.getElementById("codeEditor");
+      const hl = document.getElementById("highlighting");
+      if (ed && hl) {
+        hl.scrollTop = ed.scrollTop;
+        hl.scrollLeft = ed.scrollLeft;
+      }
+    }
+
+    function highlightSyntax(code) {
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      const tokenRegex = /(\/\/[^\n]*)|("[^"\\]*(?:\\.[^"\\]*)*")|\b(dhoro|dekha|ne|jodi|naile|ghuro|ghur|ar|ernay|nabe)\b|\b(hasa|misa)\b|\b(\d+)\b|([==|!=|<=|>=|\+|\-|\*|\/|\^|=|{|}|;|\(|\)])/g;
+
+      let result = '';
+      let lastIndex = 0;
+      let match;
+
+      while ((match = tokenRegex.exec(code)) !== null) {
+        result += escapeHtml(code.substring(lastIndex, match.index));
+
+        const [fullMatch, comment, str, kw, boolVal, num, op] = match;
+
+        if (comment !== undefined) {
+          result += `<span class="syn-comment">${escapeHtml(comment)}</span>`;
+        } else if (str !== undefined) {
+          result += `<span class="syn-string">${escapeHtml(str)}</span>`;
+        } else if (kw !== undefined) {
+          result += `<span class="syn-keyword">${escapeHtml(kw)}</span>`;
+        } else if (boolVal !== undefined) {
+          result += `<span class="syn-boolean">${escapeHtml(boolVal)}</span>`;
+        } else if (num !== undefined) {
+          result += `<span class="syn-number">${escapeHtml(num)}</span>`;
+        } else if (op !== undefined) {
+          result += `<span class="syn-operator">${escapeHtml(op)}</span>`;
+        } else {
+          result += escapeHtml(fullMatch);
+        }
+
+        lastIndex = tokenRegex.lastIndex;
+      }
+
+      result += escapeHtml(code.substring(lastIndex));
+
+      if (code.endsWith('\n')) {
+        result += ' ';
+      }
+
+      return result;
+    }
+
+    function updateHighlighting() {
+      const code = document.getElementById("codeEditor").value;
+      document.getElementById("highlightingContent").innerHTML = highlightSyntax(code);
+      syncScroll();
     }
 
     // Initialize with default preset
