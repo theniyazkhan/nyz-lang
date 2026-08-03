@@ -1,10 +1,10 @@
-dekha "Ekta shongkha daw (Enter a number):";
+dekha "Ekta shongkha dein (Enter a number):";
 dhoro user_num;
 ne user_num;
 
-dekha "Apni disen (You entered):";
+dekha "Afne disoin (You entered):";
 dekha user_num;
 
 dhoro squared = user_num ^ 2;
-dekha "Erar borgofol (Its square is):";
+dekha "Iktar borgofol (Its square is):";
 dekha squared;
