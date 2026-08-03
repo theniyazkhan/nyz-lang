@@ -289,10 +289,6 @@
         <option value="power">Power ^</option>
         <option value="logical">Logical Operators</option>
       </select>
-      <select id="engineSelect">
-        <option value="js">Browser JS Engine</option>
-        <option value="backend">C Backend Server (/api/run)</option>
-      </select>
       <a href="https://github.com/theniyazkhan/syleti_lang/blob/main/Language_Manual.txt" target="_blank" class="btn-learn">
         📖 Learn
       </a>
@@ -918,36 +914,7 @@
       document.getElementById("statusBadge").style.color = "#f59e0b";
 
       const code = document.getElementById("codeEditor").value;
-      const engineMode = document.getElementById("engineSelect").value;
 
-      if (engineMode === 'backend') {
-        // Run via C Backend API endpoint (/api/run)
-        try {
-          printConsole("[Backend] Sending code to C compiler server...");
-          const resp = await fetch('/api/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, inputs: [] })
-          });
-          const data = await resp.json();
-          if (data.success) {
-            printConsole(data.output);
-            document.getElementById("statusBadge").textContent = "Exit 0";
-            document.getElementById("statusBadge").style.color = "#10b981";
-          } else {
-            printConsole("Backend Error: " + (data.error || 'Execution failed'));
-            document.getElementById("statusBadge").textContent = "Error";
-            document.getElementById("statusBadge").style.color = "#ef4444";
-          }
-        } catch (err) {
-          printConsole("Network/Server Error: " + err.message + "\nMake sure Node.js server (server.js) is running.");
-          document.getElementById("statusBadge").textContent = "Server Error";
-          document.getElementById("statusBadge").style.color = "#ef4444";
-        }
-        return;
-      }
-
-      // Default: Client-Side JS AST Engine
       try {
         const tokens = lexer(code);
         const parser = new Parser(tokens);
