@@ -267,23 +267,29 @@
       border-radius: 0 0 12px 12px;
     }
 
-    #codeEditor, #highlighting {
+    #codeEditor, #highlighting, #highlightingContent, #highlighting * {
       margin: 0;
-      padding: 1rem;
-      border: none;
-      width: 100%;
-      height: 100%;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.95rem;
-      line-height: 1.6;
+      font-family: 'Fira Code', monospace !important;
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      font-weight: 400 !important;
+      letter-spacing: 0px !important;
+      word-spacing: 0px !important;
       tab-size: 2;
       white-space: pre-wrap;
       word-wrap: break-word;
       word-break: break-all;
+      box-sizing: border-box;
+    }
+
+    #codeEditor, #highlighting {
+      padding: 1rem;
+      border: none;
+      width: 100%;
+      height: 100%;
       position: absolute;
       top: 0;
       left: 0;
-      box-sizing: border-box;
       overflow: auto;
     }
 
@@ -302,13 +308,13 @@
       color: #f3f4f6;
     }
 
-    /* Syntax Highlighting Colors */
-    .syn-keyword { color: var(--kw-color); font-weight: 600; }
-    .syn-boolean { color: #f472b6; font-weight: 600; }
+    /* Syntax Highlighting Colors - uniform font-weight: 400 for perfect 1-to-1 caret alignment */
+    .syn-keyword { color: var(--kw-color); }
+    .syn-boolean { color: #f472b6; }
     .syn-string { color: #34d399; }
     .syn-number { color: #fbbf24; }
     .syn-operator { color: #c084fc; }
-    .syn-comment { color: #6b7280; font-style: italic; }
+    .syn-comment { color: #6b7280; font-style: italic !important; }
 
     #consoleOutput {
       flex: 1;
@@ -604,11 +610,12 @@
           continue;
         }
 
-        // Strings
-        if (ch === '"') {
+        // Strings (support standard & smart quotes)
+        if (ch === '"' || ch === '“' || ch === '”' || ch === "'" || ch === '‘' || ch === '’') {
+          const quoteChar = ch;
           i++;
           let strVal = '';
-          while (i < len && code[i] !== '"') {
+          while (i < len && code[i] !== quoteChar && code[i] !== '"' && code[i] !== '”') {
             if (code[i] === '\\' && i + 1 < len) {
               i++;
               if (code[i] === 'n') strVal += '\n';
@@ -619,20 +626,21 @@
             }
             i++;
           }
-          i++; // skip closing "
+          i++; // skip closing quote
           tokens.push({ type: 'STRING', value: strVal });
           continue;
         }
 
-        // Identifiers & Keywords
+        // Identifiers & Keywords (case-insensitive for keywords)
         if (/[a-zA-Z_]/.test(ch)) {
           let id = '';
           while (i < len && /[a-zA-Z0-9_]/.test(code[i])) {
             id += code[i];
             i++;
           }
-          if (KEYWORDS.has(id)) {
-            tokens.push({ type: id.toUpperCase(), value: id });
+          const lowerId = id.toLowerCase();
+          if (KEYWORDS.has(lowerId)) {
+            tokens.push({ type: lowerId.toUpperCase(), value: lowerId });
           } else {
             tokens.push({ type: 'IDENTIFIER', value: id });
           }
@@ -712,7 +720,13 @@
       }
 
       parseStatement() {
+        // Ignore extra semicolons
+        while (this.peek().type === ';') {
+          this.consume(';');
+        }
+
         const tok = this.peek();
+        if (tok.type === 'EOF') return null;
 
         if (tok.type === 'DHORO') {
           this.consume('DHORO');
@@ -721,7 +735,7 @@
           if (this.match('=')) {
             init = this.parseExpression();
           }
-          this.consume(';');
+          this.match(';');
           return { type: 'DECLARATION', name: nameTok.value, init };
         }
 
@@ -740,14 +754,14 @@
           } else {
             expr = this.parseExpression();
           }
-          this.consume(';');
+          this.match(';');
           return { type: 'PRINT', expr };
         }
 
         if (tok.type === 'NE') {
           this.consume('NE');
           const nameTok = this.consume('IDENTIFIER');
-          this.consume(';');
+          this.match(';');
           return { type: 'INPUT', name: nameTok.value };
         }
 
@@ -783,13 +797,13 @@
               const nameTok = this.consume('IDENTIFIER');
               let expr = null;
               if (this.match('=')) expr = this.parseExpression();
-              this.consume(';');
+              this.match(';');
               init = { type: 'DECLARATION', name: nameTok.value, init: expr };
             } else if (this.peek().type === 'IDENTIFIER') {
               const nameTok = this.consume('IDENTIFIER');
               this.consume('=');
               const expr = this.parseExpression();
-              this.consume(';');
+              this.match(';');
               init = { type: 'ASSIGNMENT', name: nameTok.value, expr };
             }
           } else {
@@ -797,7 +811,7 @@
           }
 
           const cond = this.parseExpression();
-          this.consume(';');
+          this.match(';');
 
           let step = null;
           if (this.peek().type !== ')') {
@@ -816,7 +830,8 @@
           this.consume('{');
           const stmts = [];
           while (this.peek().type !== '}' && this.peek().type !== 'EOF') {
-            stmts.push(this.parseStatement());
+            const stmt = this.parseStatement();
+            if (stmt) stmts.push(stmt);
           }
           this.consume('}');
           return { type: 'BLOCK', body: stmts };
@@ -826,7 +841,7 @@
           const nameTok = this.consume('IDENTIFIER');
           this.consume('=');
           const expr = this.parseExpression();
-          this.consume(';');
+          this.match(';');
           return { type: 'ASSIGNMENT', name: nameTok.value, expr };
         }
 
