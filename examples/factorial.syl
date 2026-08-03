@@ -1,6 +1,6 @@
 dekha "=== Sylheti Factorial Calculator ===";
 
-dekha "Ekta shongkha (n) daw:";
+dekha "Ekta shongkha (n) dein:";
 dhoro n;
 ne n;
 

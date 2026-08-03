@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://theniyazkhan.bond/Sylheti-Compiler/sitemap.xml
