@@ -1,0 +1,13 @@
+dhoro sum = 0;
+ghur (dhoro i = 1; i <= 5; i = i + 1) {
+  sum = sum + i;
+}
+dekha "Sum 1..5 using ghur:";
+dekha sum;
+
+dhoro count = 3;
+ghuro (count > 0) {
+  dekha "Count ghuro:";
+  dekha count;
+  count = count - 1;
+}

@@ -201,7 +201,7 @@
     .editor-wrapper {
       flex: 1;
       position: relative;
-      min-height: 280px;
+      min-height: 320px;
     }
 
     textarea#codeEditor {
@@ -229,7 +229,7 @@
       padding: 1rem;
       overflow-y: auto;
       white-space: pre-wrap;
-      min-height: 280px;
+      min-height: 320px;
     }
 
     .console-input-row {
@@ -266,7 +266,7 @@
         padding: 0.75rem 1rem;
         height: auto;
       }
-      .editor-wrapper, #consoleOutput { min-height: 220px; }
+      .editor-wrapper, #consoleOutput { min-height: 240px; }
       .header-controls { width: 100%; justify-content: space-between; }
       select { flex: 1; }
     }
@@ -281,11 +281,17 @@
     </div>
     <div class="header-controls">
       <select id="presetSelect" onchange="loadPreset()">
-        <option value="simple">Simple Input Demo</option>
+        <option value="factorial">Factorial (For Loop)</option>
+        <option value="ghur_loop">For Loop (ghur)</option>
+        <option value="ghuro_loop">While Loop (ghuro)</option>
         <option value="calculator">Calculator</option>
-        <option value="factorial">Factorial</option>
+        <option value="simple">Simple Input Demo</option>
         <option value="power">Power ^</option>
         <option value="logical">Logical Operators</option>
+      </select>
+      <select id="engineSelect">
+        <option value="js">Browser JS Engine</option>
+        <option value="backend">C Backend Server (/api/run)</option>
       </select>
       <a href="https://github.com/theniyazkhan/syleti_lang/blob/main/Language_Manual.txt" target="_blank" class="btn-learn">
         📖 Learn
@@ -328,7 +334,7 @@
         <span>CONSOLE OUTPUT</span>
         <span id="statusBadge" style="color: #10b981;">Ready</span>
       </div>
-      <div id="consoleOutput">=== Sylheti-Lang Interactive Playground ===\nClick "Run" or tap ▶ Run to execute script.</div>
+      <div id="consoleOutput">=== Sylheti-Lang Interactive Playground ===&#10;Click "Run" or tap ▶ Run to execute script.</div>
       <div class="console-input-row" id="inputRow">
         <span style="color: #10b981; font-family: monospace;">Input ›</span>
         <input type="number" id="userInput" placeholder="Enter integer and press Enter..." onkeydown="handleInputSubmit(event)">
@@ -338,9 +344,11 @@
 
   <script>
     const presets = {
+      factorial: `dekha "=== Factorial Calculator ===";\n\ndekha "Ekta shongkha (n) dein:";\ndhoro n;\nne n;\n\ndhoro fact = 1;\nghur (dhoro i = 1; i <= n; i = i + 1) {\n  fact = fact * i;\n}\n\ndekha "Factorial is:";\ndekha fact;`,
+      ghur_loop: `dekha "=== For Loop (ghur) Countdown ===";\n\nghur (dhoro i = 5; i > 0; i = i - 1) {\n  dekha "Countdown:";\n  dekha i;\n}\ndekha "Lift off!";`,
+      ghuro_loop: `dekha "=== While Loop (ghuro) Sum ===";\n\ndhoro count = 5;\ndhoro total = 0;\n\nghuro (count > 0) {\n  total = total + count;\n  count = count - 1;\n}\n\ndekha "Sum of 1 to 5:";\ndekha total;`,
       simple: `dekha "Ekta shongkha dein (Enter a number):";\ndhoro x;\nne x;\n\ndekha "Afne disoin (You entered):";\ndekha x;`,
       calculator: `dekha "=== Sylheti Calculator ===";\n\ndekha "Enter first number (a):";\ndhoro a;\nne a;\n\ndekha "Enter second number (b):";\ndhoro b;\nne b;\n\ndhoro sum = a + b;\ndekha "a + b =";\ndekha sum;\n\ndhoro pwr = a ^ b;\ndekha "a ^ b =";\ndekha pwr;`,
-      factorial: `dekha "=== Factorial Calculator ===";\n\ndekha "Ekta shongkha (n) dein:";\ndhoro n;\nne n;\n\ndhoro fact = 1;\nghur (dhoro i = 1; i <= n; i = i + 1) {\n  fact = fact * i;\n}\n\ndekha "Factorial is:";\ndekha fact;`,
       power: `dekha "=== Exponentiation Power ^ Test ===";\n\ndhoro base = 2;\ndhoro exp = 3;\ndhoro res = base ^ exp;\ndekha "2 ^ 3 =";\ndekha res;\n\ndhoro assoc = 2 ^ 3 ^ 2;\ndekha "2 ^ 3 ^ 2 =";\ndekha assoc;`,
       logical: `dekha "=== Logical Operators Test ===";\n\ndhoro x = 15;\ndhoro y = 30;\n\njodi (x > 10 ar y > 20) {\n  dekha "Both TRUE (ar)!";\n}\n\njodi (x == 100 ernay y == 30) {\n  dekha "At least one TRUE (ernay)!";\n}`
     };
@@ -396,80 +404,567 @@
       }
     }
 
-    // Sylheti AST Interpreter Engine
+    // =========================================================================
+    // SYLHETI LEXER, PARSER & AST INTERPRETER ENGINE
+    // =========================================================================
+
+    const KEYWORDS = new Set([
+      'dhoro', 'dekha', 'ne', 'jodi', 'naile', 'ghuro', 'ghur',
+      'hasa', 'misa', 'ar', 'ernay', 'nabe'
+    ]);
+
+    function lexer(code) {
+      const tokens = [];
+      let i = 0;
+      const len = code.length;
+
+      while (i < len) {
+        let ch = code[i];
+
+        // Skip whitespace
+        if (/\s/.test(ch)) {
+          i++;
+          continue;
+        }
+
+        // Skip single-line comments
+        if (ch === '/' && code[i + 1] === '/') {
+          i += 2;
+          while (i < len && code[i] !== '\n') i++;
+          continue;
+        }
+
+        // Numbers
+        if (/[0-9]/.test(ch)) {
+          let numStr = '';
+          while (i < len && /[0-9]/.test(code[i])) {
+            numStr += code[i];
+            i++;
+          }
+          tokens.push({ type: 'INT', value: parseInt(numStr, 10) });
+          continue;
+        }
+
+        // Strings
+        if (ch === '"') {
+          i++;
+          let strVal = '';
+          while (i < len && code[i] !== '"') {
+            if (code[i] === '\\' && i + 1 < len) {
+              i++;
+              if (code[i] === 'n') strVal += '\n';
+              else if (code[i] === 't') strVal += '\t';
+              else strVal += code[i];
+            } else {
+              strVal += code[i];
+            }
+            i++;
+          }
+          i++; // skip closing "
+          tokens.push({ type: 'STRING', value: strVal });
+          continue;
+        }
+
+        // Identifiers & Keywords
+        if (/[a-zA-Z_]/.test(ch)) {
+          let id = '';
+          while (i < len && /[a-zA-Z0-9_]/.test(code[i])) {
+            id += code[i];
+            i++;
+          }
+          if (KEYWORDS.has(id)) {
+            tokens.push({ type: id.toUpperCase(), value: id });
+          } else {
+            tokens.push({ type: 'IDENTIFIER', value: id });
+          }
+          continue;
+        }
+
+        // Multi-character operators
+        if (ch === '=' && code[i + 1] === '=') {
+          tokens.push({ type: 'EQ', value: '==' });
+          i += 2;
+          continue;
+        }
+        if (ch === '!' && code[i + 1] === '=') {
+          tokens.push({ type: 'NEQ', value: '!=' });
+          i += 2;
+          continue;
+        }
+        if (ch === '<' && code[i + 1] === '=') {
+          tokens.push({ type: 'LE', value: '<=' });
+          i += 2;
+          continue;
+        }
+        if (ch === '>' && code[i + 1] === '=') {
+          tokens.push({ type: 'GE', value: '>=' });
+          i += 2;
+          continue;
+        }
+
+        // Single-character symbols & operators
+        if ('+-*/^=()<>{};'.includes(ch)) {
+          tokens.push({ type: ch, value: ch });
+          i++;
+          continue;
+        }
+
+        throw new Error(`Unexpected character: '${ch}'`);
+      }
+
+      tokens.push({ type: 'EOF', value: null });
+      return tokens;
+    }
+
+    class Parser {
+      constructor(tokens) {
+        this.tokens = tokens;
+        this.pos = 0;
+      }
+
+      peek() {
+        return this.tokens[this.pos];
+      }
+
+      consume(type) {
+        const tok = this.peek();
+        if (type && tok.type !== type) {
+          throw new Error(`Expected token '${type}', but found '${tok.type}' (${tok.value})`);
+        }
+        this.pos++;
+        return tok;
+      }
+
+      match(type) {
+        if (this.peek().type === type) {
+          this.consume(type);
+          return true;
+        }
+        return false;
+      }
+
+      parseProgram() {
+        const statements = [];
+        while (this.peek().type !== 'EOF') {
+          const stmt = this.parseStatement();
+          if (stmt) statements.push(stmt);
+        }
+        return { type: 'PROGRAM', body: statements };
+      }
+
+      parseStatement() {
+        const tok = this.peek();
+
+        if (tok.type === 'DHORO') {
+          this.consume('DHORO');
+          const nameTok = this.consume('IDENTIFIER');
+          let init = null;
+          if (this.match('=')) {
+            init = this.parseExpression();
+          }
+          this.consume(';');
+          return { type: 'DECLARATION', name: nameTok.value, init };
+        }
+
+        if (tok.type === 'DEKHA') {
+          this.consume('DEKHA');
+          let expr;
+          if (this.peek().type === 'STRING') {
+            expr = { type: 'STRING_LITERAL', value: this.consume('STRING').value };
+          } else if (this.match('(')) {
+            if (this.peek().type === 'STRING') {
+              expr = { type: 'STRING_LITERAL', value: this.consume('STRING').value };
+            } else {
+              expr = this.parseExpression();
+            }
+            this.consume(')');
+          } else {
+            expr = this.parseExpression();
+          }
+          this.consume(';');
+          return { type: 'PRINT', expr };
+        }
+
+        if (tok.type === 'NE') {
+          this.consume('NE');
+          const nameTok = this.consume('IDENTIFIER');
+          this.consume(';');
+          return { type: 'INPUT', name: nameTok.value };
+        }
+
+        if (tok.type === 'JODI') {
+          this.consume('JODI');
+          this.consume('(');
+          const cond = this.parseExpression();
+          this.consume(')');
+          const body = this.parseStatement();
+          let elseBody = null;
+          if (this.match('NAILE')) {
+            elseBody = this.parseStatement();
+          }
+          return { type: 'IF', cond, body, elseBody };
+        }
+
+        if (tok.type === 'GHURO') {
+          this.consume('GHURO');
+          this.consume('(');
+          const cond = this.parseExpression();
+          this.consume(')');
+          const body = this.parseStatement();
+          return { type: 'WHILE', cond, body };
+        }
+
+        if (tok.type === 'GHUR') {
+          this.consume('GHUR');
+          this.consume('(');
+          let init = null;
+          if (this.peek().type !== ';') {
+            if (this.peek().type === 'DHORO') {
+              this.consume('DHORO');
+              const nameTok = this.consume('IDENTIFIER');
+              let expr = null;
+              if (this.match('=')) expr = this.parseExpression();
+              this.consume(';');
+              init = { type: 'DECLARATION', name: nameTok.value, init: expr };
+            } else if (this.peek().type === 'IDENTIFIER') {
+              const nameTok = this.consume('IDENTIFIER');
+              this.consume('=');
+              const expr = this.parseExpression();
+              this.consume(';');
+              init = { type: 'ASSIGNMENT', name: nameTok.value, expr };
+            }
+          } else {
+            this.consume(';');
+          }
+
+          const cond = this.parseExpression();
+          this.consume(';');
+
+          let step = null;
+          if (this.peek().type !== ')') {
+            const nameTok = this.consume('IDENTIFIER');
+            this.consume('=');
+            const expr = this.parseExpression();
+            step = { type: 'ASSIGNMENT', name: nameTok.value, expr };
+          }
+          this.consume(')');
+
+          const body = this.parseStatement();
+          return { type: 'FOR', init, cond, step, body };
+        }
+
+        if (tok.type === '{') {
+          this.consume('{');
+          const stmts = [];
+          while (this.peek().type !== '}' && this.peek().type !== 'EOF') {
+            stmts.push(this.parseStatement());
+          }
+          this.consume('}');
+          return { type: 'BLOCK', body: stmts };
+        }
+
+        if (tok.type === 'IDENTIFIER') {
+          const nameTok = this.consume('IDENTIFIER');
+          this.consume('=');
+          const expr = this.parseExpression();
+          this.consume(';');
+          return { type: 'ASSIGNMENT', name: nameTok.value, expr };
+        }
+
+        throw new Error(`Unexpected statement starting with '${tok.value || tok.type}'`);
+      }
+
+      parseExpression() {
+        return this.parseLogicalOr();
+      }
+
+      parseLogicalOr() {
+        let left = this.parseLogicalAnd();
+        while (this.peek().type === 'ERNAY') {
+          const op = this.consume('ERNAY').value;
+          const right = this.parseLogicalAnd();
+          left = { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseLogicalAnd() {
+        let left = this.parseEquality();
+        while (this.peek().type === 'AR') {
+          const op = this.consume('AR').value;
+          const right = this.parseEquality();
+          left = { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseEquality() {
+        let left = this.parseRelational();
+        while (['EQ', 'NEQ'].includes(this.peek().type)) {
+          const op = this.consume(this.peek().type).value;
+          const right = this.parseRelational();
+          left = { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseRelational() {
+        let left = this.parseAdditive();
+        while (['<', 'LE', '>', 'GE'].includes(this.peek().type)) {
+          const op = this.consume(this.peek().type).value;
+          const right = this.parseAdditive();
+          left = { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseAdditive() {
+        let left = this.parseMultiplicative();
+        while (['+', '-'].includes(this.peek().type)) {
+          const op = this.consume(this.peek().type).value;
+          const right = this.parseMultiplicative();
+          left = { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseMultiplicative() {
+        let left = this.parseExponentiation();
+        while (['*', '/'].includes(this.peek().type)) {
+          const op = this.consume(this.peek().type).value;
+          const right = this.parseExponentiation();
+          left = { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseExponentiation() {
+        let left = this.parseUnary();
+        if (this.peek().type === '^') {
+          const op = this.consume('^').value;
+          const right = this.parseExponentiation(); // Right-associative
+          return { type: 'BINARY', op, left, right };
+        }
+        return left;
+      }
+
+      parseUnary() {
+        if (this.peek().type === 'NABE') {
+          this.consume('NABE');
+          return { type: 'UNARY', op: 'NABE', expr: this.parseUnary() };
+        }
+        if (this.peek().type === '-') {
+          this.consume('-');
+          return { type: 'UNARY', op: '-', expr: this.parseUnary() };
+        }
+        return this.parsePrimary();
+      }
+
+      parsePrimary() {
+        const tok = this.peek();
+
+        if (tok.type === 'INT') {
+          this.consume('INT');
+          return { type: 'INT_LITERAL', value: tok.value };
+        }
+        if (tok.type === 'HASA') {
+          this.consume('HASA');
+          return { type: 'INT_LITERAL', value: 1 };
+        }
+        if (tok.type === 'MISA') {
+          this.consume('MISA');
+          return { type: 'INT_LITERAL', value: 0 };
+        }
+        if (tok.type === 'IDENTIFIER') {
+          this.consume('IDENTIFIER');
+          return { type: 'VARIABLE', name: tok.value };
+        }
+        if (tok.type === '(') {
+          this.consume('(');
+          const expr = this.parseExpression();
+          this.consume(')');
+          return expr;
+        }
+
+        throw new Error(`Unexpected expression token '${tok.value || tok.type}'`);
+      }
+    }
+
+    // =========================================================================
+    // AST INTERPRETER EVALUATOR
+    // =========================================================================
+
+    async function evaluateExpr(node, env) {
+      if (!node) return 0;
+
+      switch (node.type) {
+        case 'INT_LITERAL':
+          return node.value;
+        case 'VARIABLE':
+          if (!(node.name in env)) {
+            throw new Error(`Undefined variable '${node.name}'`);
+          }
+          return env[node.name];
+        case 'UNARY': {
+          const val = await evaluateExpr(node.expr, env);
+          if (node.op === 'NABE') return val ? 0 : 1;
+          if (node.op === '-') return -val;
+          return val;
+        }
+        case 'BINARY': {
+          const left = await evaluateExpr(node.left, env);
+          const right = await evaluateExpr(node.right, env);
+          switch (node.op) {
+            case '+': return left + right;
+            case '-': return left - right;
+            case '*': return left * right;
+            case '/':
+              if (right === 0) throw new Error('Division by zero');
+              return Math.floor(left / right);
+            case '^': return Math.pow(left, right);
+            case '<': return left < right ? 1 : 0;
+            case '<=': return left <= right ? 1 : 0;
+            case '>': return left > right ? 1 : 0;
+            case '>=': return left >= right ? 1 : 0;
+            case '==': return left === right ? 1 : 0;
+            case '!=': return left !== right ? 1 : 0;
+            case 'ar': return (left && right) ? 1 : 0;
+            case 'ernay': return (left || right) ? 1 : 0;
+          }
+        }
+      }
+      return 0;
+    }
+
+    async function executeAstNode(node, env) {
+      if (!node) return;
+
+      switch (node.type) {
+        case 'PROGRAM':
+          for (const stmt of node.body) {
+            await executeAstNode(stmt, env);
+          }
+          break;
+
+        case 'BLOCK':
+          for (const stmt of node.body) {
+            await executeAstNode(stmt, env);
+          }
+          break;
+
+        case 'DECLARATION': {
+          const val = node.init ? await evaluateExpr(node.init, env) : 0;
+          env[node.name] = val;
+          break;
+        }
+
+        case 'ASSIGNMENT': {
+          const val = await evaluateExpr(node.expr, env);
+          env[node.name] = val;
+          break;
+        }
+
+        case 'PRINT': {
+          if (node.expr.type === 'STRING_LITERAL') {
+            printConsole(node.expr.value);
+          } else {
+            const val = await evaluateExpr(node.expr, env);
+            printConsole(val);
+          }
+          break;
+        }
+
+        case 'INPUT': {
+          const val = await promptInput(node.name);
+          env[node.name] = val;
+          break;
+        }
+
+        case 'IF': {
+          const condVal = await evaluateExpr(node.cond, env);
+          if (condVal) {
+            await executeAstNode(node.body, env);
+          } else if (node.elseBody) {
+            await executeAstNode(node.elseBody, env);
+          }
+          break;
+        }
+
+        case 'WHILE': {
+          while (await evaluateExpr(node.cond, env)) {
+            await executeAstNode(node.body, env);
+          }
+          break;
+        }
+
+        case 'FOR': {
+          if (node.init) await executeAstNode(node.init, env);
+          while (await evaluateExpr(node.cond, env)) {
+            await executeAstNode(node.body, env);
+            if (node.step) await executeAstNode(node.step, env);
+          }
+          break;
+        }
+      }
+    }
+
+    // =========================================================================
+    // MAIN EXECUTION CONTROLLER (JS vs C BACKEND)
+    // =========================================================================
+
     async function runSylhetiCode() {
       clearConsole();
       document.getElementById("statusBadge").textContent = "Running...";
       document.getElementById("statusBadge").style.color = "#f59e0b";
 
       const code = document.getElementById("codeEditor").value;
-      const symbols = {};
+      const engineMode = document.getElementById("engineSelect").value;
 
-      try {
-        const lines = code.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i].trim();
-          if (!line || line.startsWith('//')) continue;
-
-          if (line.startsWith('dekha ')) {
-            let exprStr = line.substring(6).replace(/;$/, '').trim();
-            if (exprStr.startsWith('"') && exprStr.endsWith('"')) {
-              printConsole(exprStr.slice(1, -1));
-            } else {
-              let val = evaluate(exprStr, symbols);
-              printConsole(val);
-            }
-          } else if (line.startsWith('dhoro ')) {
-            let decl = line.substring(6).replace(/;$/, '').trim();
-            if (decl.includes('=')) {
-              let [name, expr] = decl.split('=').map(s => s.trim());
-              symbols[name] = evaluate(expr, symbols);
-            } else {
-              symbols[decl] = 0;
-            }
-          } else if (line.startsWith('ne ')) {
-            let varName = line.substring(3).replace(/;$/, '').trim();
-            let val = await promptInput(varName);
-            symbols[varName] = val;
-          } else if (line.includes('=')) {
-            let [name, expr] = line.replace(/;$/, '').split('=').map(s => s.trim());
-            if (symbols.hasOwnProperty(name)) {
-              symbols[name] = evaluate(expr, symbols);
-            }
+      if (engineMode === 'backend') {
+        // Run via C Backend API endpoint (/api/run)
+        try {
+          printConsole("[Backend] Sending code to C compiler server...");
+          const resp = await fetch('/api/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, inputs: [] })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            printConsole(data.output);
+            document.getElementById("statusBadge").textContent = "Exit 0";
+            document.getElementById("statusBadge").style.color = "#10b981";
+          } else {
+            printConsole("Backend Error: " + (data.error || 'Execution failed'));
+            document.getElementById("statusBadge").textContent = "Error";
+            document.getElementById("statusBadge").style.color = "#ef4444";
           }
+        } catch (err) {
+          printConsole("Network/Server Error: " + err.message + "\nMake sure Node.js server (server.js) is running.");
+          document.getElementById("statusBadge").textContent = "Server Error";
+          document.getElementById("statusBadge").style.color = "#ef4444";
         }
+        return;
+      }
+
+      // Default: Client-Side JS AST Engine
+      try {
+        const tokens = lexer(code);
+        const parser = new Parser(tokens);
+        const ast = parser.parseProgram();
+        const env = {};
+        await executeAstNode(ast, env);
+
         document.getElementById("statusBadge").textContent = "Exit 0";
         document.getElementById("statusBadge").style.color = "#10b981";
       } catch (err) {
-        printConsole("Runtime Error: " + err.message);
+        printConsole("Syntax/Runtime Error: " + err.message);
         document.getElementById("statusBadge").textContent = "Error";
         document.getElementById("statusBadge").style.color = "#ef4444";
       }
     }
 
-    function evaluate(expr, symbols) {
-      expr = expr.replace(/\bhasa\b/g, '1').replace(/\bmisa\b/g, '0');
-      while (expr.includes('^')) {
-        let parts = expr.split('^');
-        let right = evaluate(parts.pop(), symbols);
-        let left = evaluate(parts.join('^'), symbols);
-        return Math.pow(left, right);
-      }
-
-      Object.keys(symbols).forEach(key => {
-        const regex = new RegExp(`\\b${key}\\b`, 'g');
-        expr = expr.replace(regex, symbols[key]);
-      });
-
-      expr = expr.replace(/\bar\b/g, '&&').replace(/\bernay\b/g, '||').replace(/\bnabe\b/g, '!');
-      try {
-        return Function(`"use strict"; return (${expr})`)();
-      } catch (e) {
-        return 0;
-      }
-    }
-
-    // Initialize with simple preset
+    // Initialize with default preset
     loadPreset();
   </script>
 </body>
