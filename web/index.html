@@ -59,8 +59,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./app.js" defer></script>
+  <base href="/Sylheti-Compiler/">
+  <link rel="stylesheet" href="/Sylheti-Compiler/styles.css">
+  <script src="/Sylheti-Compiler/app.js" defer></script>
+  <script>
+    if (window.location.pathname === '/Sylheti-Compiler') {
+      window.location.replace('/Sylheti-Compiler/');
+    }
+  </script>
 </head>
 <body>
 
