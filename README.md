@@ -116,3 +116,48 @@ This compiles `lexer.l` and `parser.y` into the executable `sylheti` (`sylheti.e
 ```bash
 make clean
 ```
+
+---
+
+## 🌐 Web Server & Execution API
+
+Sylheti includes an Express.js backend server (`server.js`) that serves an interactive web interface and exposes a REST API for running `.syl` scripts dynamically.
+
+### Setup & Launch
+
+1. Install Node.js dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the web server:
+   ```bash
+   npm start
+   # or for development mode:
+   npm run dev
+   ```
+
+3. Open your browser and navigate to `http://localhost:3000` (or `http://localhost:<PORT>` if setting `PORT` environment variable).
+
+### API Endpoint (`POST /api/run`)
+
+Executes Sylheti source code via the compiled binary and returns stdout/stderr.
+
+- **URL**: `/api/run`
+- **Method**: `POST`
+- **Headers**: `Content-Type: application/json`
+- **Request Body**:
+  ```json
+  {
+    "code": "dhoro x = 5;\ndekha x ^ 2;",
+    "inputs": []
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "output": "25\n"
+  }
+  ```
+
