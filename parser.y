@@ -101,6 +101,7 @@ typedef struct Ast {
           Ast *right;
         } binary;
         struct {
+          OpType op;
           Ast *child;
         } unary;
       } data;
@@ -418,10 +419,10 @@ static Ast *make_binary_expr(OpType op, Ast *left, Ast *right) {
 }
 
 static Ast *make_unary_expr(OpType op, Ast *child) {
-  (void)op;
   Ast *node = calloc(1, sizeof(*node));
   node->type = AST_EXPRESSION;
   node->as.expression.kind = EXPR_NEGATE;
+  node->as.expression.data.unary.op = op;
   node->as.expression.data.unary.child = child;
   return node;
 }
@@ -539,6 +540,9 @@ static int evaluate_expression(Ast *expr) {
     }
     case EXPR_NEGATE: {
       int val = evaluate_expression(expr->as.expression.data.unary.child);
+      if (expr->as.expression.data.unary.op == OP_NOT) {
+        return (!val) ? 1 : 0;
+      }
       return -val;
     }
     case EXPR_STRING:
